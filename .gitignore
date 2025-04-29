@@ -1,6 +1,7 @@
 # Build directories
 Object/
-bin/
+bin/json_test.exe
+
 
 # IDE files
 .vs/

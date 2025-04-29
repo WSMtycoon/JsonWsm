@@ -1,0 +1,23 @@
+{
+  "isActive": true,
+  "count": 42,
+  "price": 19.99,
+  "tags": ["new", "sale", "popular"],
+  "dimensions": {
+    "width": 15.5,
+    "height": 10.2,
+    "depth": 5.0
+  },
+  "items": [
+    {
+      "id": 1,
+      "name": "Product A",
+      "inStock": false
+    },
+    {
+      "id": 2,
+      "name": "Product B",
+      "inStock": true
+    }
+  ]
+}
