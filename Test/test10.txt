@@ -1,0 +1,25 @@
+{
+  "data": {
+    "string": "Hello, World!",
+    "number": 42,
+    "boolean": true,
+    "null": null,
+    "array": [1, "two", 3.0, true, null],
+    "object": {
+      "nested": "value",
+      "array": [1, 2, 3],
+      "object": {
+        "deep": "value"
+      }
+    }
+  },
+  "formats": {
+    "date": "2024-03-14",
+    "time": "12:34:56",
+    "datetime": "2024-03-14T12:34:56Z",
+    "email": "test@example.com",
+    "url": "https://example.com",
+    "ip": "192.168.1.1",
+    "uuid": "123e4567-e89b-12d3-a456-426614174000"
+  }
+} 

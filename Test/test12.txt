@@ -1,0 +1,36 @@
+{
+  "arrays": {
+    "empty": [],
+    "simple": [1, 2, 3, 4, 5],
+    "mixed": [1, "two", 3.0, true, null, {"key": "value"}],
+    "nested": [
+      [1, 2, 3],
+      ["a", "b", "c"],
+      [true, false, null],
+      [{"key": "value"}, {"key": 42}]
+    ],
+    "objects": [
+      {"id": 1, "value": "one"},
+      {"id": 2, "value": "two"},
+      {"id": 3, "value": "three"}
+    ],
+    "complex": [
+      {
+        "id": 1,
+        "data": [1, 2, 3],
+        "nested": {
+          "key": "value",
+          "array": [4, 5, 6]
+        }
+      },
+      {
+        "id": 2,
+        "data": ["a", "b", "c"],
+        "nested": {
+          "key": 42,
+          "array": [true, false, null]
+        }
+      }
+    ]
+  }
+} 

@@ -1,0 +1,26 @@
+{
+  "edgeCases": {
+    "empty": {},
+    "emptyArray": [],
+    "nullValues": {
+      "key1": null,
+      "key2": null,
+      "key3": null
+    },
+    "booleanValues": {
+      "true": true,
+      "false": false
+    },
+    "emptyStrings": {
+      "empty": "",
+      "quoted": "\"\"",
+      "spaces": "   "
+    },
+    "specialCharacters": {
+      "quotes": "\"\"\"",
+      "slashes": "\\\\",
+      "newlines": "\n\r\t",
+      "unicode": "\\u0000\\u0001\\u0002"
+    }
+  }
+} 

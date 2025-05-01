@@ -1,39 +1,81 @@
-# PowerShell script to run tests on all .txt files in the test directory
+# Script for testing JsonWSM
+# Usage: .\test.ps1 [file_path]
+# If no path is specified, all .txt files in the Test folder will be tested
+# If a path is specified, only the specified file will be tested
 
-# Get the directory where the script is located
-$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+# Get file path from parameter
+param(
+    [string]$FilePath = ""
+)
 
-# Path to the executable
-$executablePath = Join-Path $scriptDir "bin\Json_test.exe"
+# Define path to Test folder
+$testPath = Join-Path $PSScriptRoot "Test"
 
-# Check if the executable exists
+# Define path to executable file
+$executablePath = Join-Path $PSScriptRoot "bin\json_test.exe"
+
+# Check if executable file exists
 if (-not (Test-Path $executablePath)) {
-    Write-Error "Executable not found at: $executablePath"
+    Write-Host "Error: Executable file not found: $executablePath" -ForegroundColor Red
     exit 1
 }
 
-# Get all .txt files in the test directory
-$testFiles = Get-ChildItem -Path (Join-Path $scriptDir "Test") -Filter "*.txt"
-
-if ($testFiles.Count -eq 0) {
-    Write-Error "No test files found in the Test directory"
-    exit 1
-}
-
-# Run tests on each file
-foreach ($file in $testFiles) {
-    $filePath = $file.FullName
-    Write-Host "`n==================================================="
-    Write-Host "Running test on file: $($file.Name)"
-    Write-Host "===================================================`n"
+# If no path is specified, test all .txt files in the Test folder
+if ($FilePath -eq "") {
+    Write-Host "Testing all .txt files in the Test folder..." -ForegroundColor Green
     
-    # Run the executable with the file path as an argument
-    & $executablePath $filePath
+    # Get list of all .txt files in the Test folder
+    $testFiles = Get-ChildItem -Path $testPath -Filter "*.txt"
     
-    # Check if the command was successful
-    if ($LASTEXITCODE -ne 0) {
-        Write-Error "Test failed for file: $($file.Name)"
+    if ($testFiles.Count -eq 0) {
+        Write-Host "Error: No .txt files found in the Test folder" -ForegroundColor Red
+        exit 1
     }
-}
-
-Write-Host "`nAll tests completed."
+    
+    # Test each file
+    foreach ($file in $testFiles) {
+        $fullPath = $file.FullName
+        Write-Host "Testing file: $($file.Name)" -ForegroundColor Cyan
+        
+        & $executablePath $fullPath
+        
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "Test for file $($file.Name) failed!" -ForegroundColor Red
+        } else {
+            Write-Host "Test for file $($file.Name) completed successfully!" -ForegroundColor Green
+        }
+        
+        Write-Host "----------------------------------------" -ForegroundColor Yellow
+    }
+} else {
+    # Define full path to file
+    $fullPath = ""
+    
+    # Check if path is absolute
+    if ([System.IO.Path]::IsPathRooted($FilePath)) {
+        # If path is absolute, use it as is
+        $fullPath = $FilePath
+    } else {
+        # If path is relative, add path to Test folder
+        $fullPath = Join-Path $testPath $FilePath
+    }
+    
+    # Check if file exists
+    if (-not (Test-Path $fullPath)) {
+        Write-Host "Error: File not found: $fullPath" -ForegroundColor Red
+        exit 1
+    }
+    
+    Write-Host "Testing file: $fullPath" -ForegroundColor Green
+    
+    # Run test with specified file
+    & $executablePath $fullPath
+    
+    # Check execution result
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Test failed!" -ForegroundColor Red
+        exit 1
+    } else {
+        Write-Host "Test completed successfully!" -ForegroundColor Green
+    }
+} 

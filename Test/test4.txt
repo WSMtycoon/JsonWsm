@@ -1,0 +1,17 @@
+{
+  "nestedArrays": [
+    [1, 2, 3],
+    ["a", "b", "c"],
+    [true, false, null],
+    [{"key": "value"}, {"key": 42}]
+  ],
+  "nestedObjects": {
+    "level1": {
+      "level2": {
+        "level3": {
+          "value": "deep"
+        }
+      }
+    }
+  }
+} 

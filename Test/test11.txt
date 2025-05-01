@@ -1,0 +1,42 @@
+{
+  "products": [
+    {
+      "id": 1,
+      "name": "Product A",
+      "price": 99.99,
+      "inStock": true,
+      "categories": ["electronics", "gadgets"],
+      "specifications": {
+        "color": "black",
+        "weight": 1.5,
+        "dimensions": {
+          "width": 10,
+          "height": 20,
+          "depth": 5
+        }
+      }
+    },
+    {
+      "id": 2,
+      "name": "Product B",
+      "price": 149.99,
+      "inStock": false,
+      "categories": ["electronics"],
+      "specifications": {
+        "color": "white",
+        "weight": 2.0,
+        "dimensions": {
+          "width": 15,
+          "height": 25,
+          "depth": 8
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "totalProducts": 2,
+    "inStock": 1,
+    "outOfStock": 1,
+    "categories": ["electronics", "gadgets"]
+  }
+} 
