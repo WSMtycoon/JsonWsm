@@ -69,6 +69,7 @@ private:
     std::vector<std::pair<std::string, std::string>> splitJsonObject(const std::string& jsonStr);
     std::string extractJsonValue(const std::string& jsonStr, size_t& pos);
     std::string extractJsonKey(const std::string& jsonStr, size_t& pos);
+    std::vector<std::any> parseArray(const std::string& value);
     
     // Helper for recursive traversal
     void traverseHelper(const std::map<std::string, std::any>& obj, 

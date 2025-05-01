@@ -1,9 +1,7 @@
-#include "JsonWSM.h"
+#include "JsonWsm.h"
 #include <regex>
 #include <sstream>
-#include <algorithm>
 #include <iostream>
-
 
 WSM::JsonMin::JsonMin() {}
 
@@ -14,91 +12,100 @@ WSM::JsonMin::JsonMin(const std::string& jsonStr) {
 }
 
 void WSM::JsonMin::parseJson(const std::string& jsonStr) {
-    // Удаляем внешние фигурные скобки, если они есть
-    std::string str = jsonStr;
-    if (str.front() == '{' && str.back() == '}') {
-        str = str.substr(1, str.length() - 2);
+    // Trim whitespace
+    std::string trimmed = jsonStr;
+    trimmed.erase(0, trimmed.find_first_not_of(" \t\n\r\f\v"));
+    trimmed.erase(trimmed.find_last_not_of(" \t\n\r\f\v") + 1);
+    
+    // Check if the string is empty or doesn't represent an object
+    if (trimmed.empty() || trimmed[0] != '{' || trimmed[trimmed.length() - 1] != '}') {
+        return;
     }
     
-    // Разбиваем JSON объект на пары ключ-значение
-    auto pairs = splitJsonObject(str);
+    // Remove the outer braces
+    trimmed = trimmed.substr(1, trimmed.length() - 2);
     
-    // Обрабатываем каждую пару
+    // Split the JSON object into key-value pairs
+    auto pairs = splitJsonObject(trimmed);
+    
+    // Parse each key-value pair
     for (const auto& pair : pairs) {
-        const std::string& key = pair.first;
-        const std::string& value = pair.second;
-        
-        // Парсим значение и сохраняем его в карте данных
-        data[key] = parseValue(value);
+        data[pair.first] = parseValue(pair.second);
     }
 }
 
 std::vector<std::pair<std::string, std::string>> WSM::JsonMin::splitJsonObject(const std::string& jsonStr) {
-    std::vector<std::pair<std::string, std::string>> result;
+    std::vector<std::pair<std::string, std::string>> pairs;
     size_t pos = 0;
     
-    // Пропускаем начальные пробелы
-    while (pos < jsonStr.length() && std::isspace(jsonStr[pos])) ++pos;
-    
     while (pos < jsonStr.length()) {
-        // Пропускаем пробелы
+        // Skip whitespace
         while (pos < jsonStr.length() && std::isspace(jsonStr[pos])) ++pos;
         if (pos >= jsonStr.length()) break;
         
-        // Извлекаем ключ
+        // Extract key
         std::string key = extractJsonKey(jsonStr, pos);
-        if (key.empty()) {
-            // Если ключ пустой, пропускаем до следующей запятой или конца
-            while (pos < jsonStr.length() && jsonStr[pos] != ',') ++pos;
-            if (pos < jsonStr.length()) ++pos; // Пропускаем запятую
-            continue;
-        }
+        if (key.empty()) break;
         
-        // Пропускаем разделитель
-        while (pos < jsonStr.length() && (std::isspace(jsonStr[pos]) || jsonStr[pos] == ':' || jsonStr[pos] == ';')) ++pos;
+        // Skip whitespace and colon
+        while (pos < jsonStr.length() && (std::isspace(jsonStr[pos]) || jsonStr[pos] == ':')) ++pos;
         if (pos >= jsonStr.length()) break;
         
-        // Извлекаем значение
+        // Extract value
         std::string value = extractJsonValue(jsonStr, pos);
+        if (!value.empty()) {
+            pairs.emplace_back(key, value);
+        }
         
-        // Добавляем пару в результат
-        result.push_back({key, value});
-        
-        // Пропускаем запятую
+        // Skip comma and whitespace
         while (pos < jsonStr.length() && (std::isspace(jsonStr[pos]) || jsonStr[pos] == ',')) ++pos;
     }
     
-    return result;
+    return pairs;
 }
 
 std::string WSM::JsonMin::extractJsonKey(const std::string& jsonStr, size_t& pos) {
-    // Key should start with a quote
-    if (jsonStr[pos] != '"') return "";
+    if (pos >= jsonStr.length() || jsonStr[pos] != '"') return "";
     
-    // Find the end of the key
-    size_t start = ++pos;
-    while (pos < jsonStr.length() && jsonStr[pos] != '"') ++pos;
-    if (pos >= jsonStr.length()) return "";
+    ++pos; // Skip opening quote
+    size_t start = pos;
+    bool escaped = false;
     
-    // Extract the key
-    std::string key = jsonStr.substr(start, pos - start);
-    ++pos; // Skip the closing quote
+    while (pos < jsonStr.length()) {
+        if (escaped) {
+            escaped = false;
+            ++pos;
+            continue;
+        }
+        
+        if (jsonStr[pos] == '\\') {
+            escaped = true;
+            ++pos;
+            continue;
+        }
+        
+        if (jsonStr[pos] == '"') {
+            size_t length = pos - start;
+            ++pos; // Skip closing quote
+            return jsonStr.substr(start, length);
+        }
+        
+        ++pos;
+    }
     
-    return key;
+    return "";
 }
 
 std::string WSM::JsonMin::extractJsonValue(const std::string& jsonStr, size_t& pos) {
-    // Пропускаем начальные пробелы
+    // Skip whitespace
     while (pos < jsonStr.length() && std::isspace(jsonStr[pos])) ++pos;
     if (pos >= jsonStr.length()) return "";
     
     size_t start = pos;
-    int braceCount = 0;
-    int bracketCount = 0;
     bool inString = false;
     bool escaped = false;
     
-    // Обрабатываем строковые значения
+    // Handle string values
     if (jsonStr[pos] == '"') {
         inString = true;
         ++pos;
@@ -116,7 +123,7 @@ std::string WSM::JsonMin::extractJsonValue(const std::string& jsonStr, size_t& p
             }
             
             if (jsonStr[pos] == '"' && !escaped) {
-                ++pos; // Включаем закрывающую кавычку
+                ++pos; // Include closing quote
                 return jsonStr.substr(start, pos - start);
             }
             
@@ -125,21 +132,21 @@ std::string WSM::JsonMin::extractJsonValue(const std::string& jsonStr, size_t& p
         return jsonStr.substr(start, pos - start);
     }
     
-    // Обрабатываем null
+    // Handle null
     if (pos + 4 <= jsonStr.length() && jsonStr.substr(pos, 4) == "null") {
         pos += 4;
         return "null";
     }
     
-    // Обрабатываем объекты и массивы
+    // Handle objects and arrays
     if (jsonStr[pos] == '{' || jsonStr[pos] == '[') {
         char openChar = jsonStr[pos];
         char closeChar = (openChar == '{') ? '}' : ']';
         
-        ++pos; // Пропускаем открывающую скобку
-        int count = 1; // Счетчик открытых/закрытых скобок
+        ++pos; // Skip opening bracket
+        int nestLevel = 1; // Counter for nested brackets
         
-        while (pos < jsonStr.length() && count > 0) {
+        while (pos < jsonStr.length() && nestLevel > 0) {
             if (escaped) {
                 escaped = false;
                 ++pos;
@@ -159,18 +166,18 @@ std::string WSM::JsonMin::extractJsonValue(const std::string& jsonStr, size_t& p
             }
             
             if (!inString) {
-                if (jsonStr[pos] == openChar) ++count;
-                else if (jsonStr[pos] == closeChar) --count;
+                if (jsonStr[pos] == openChar) ++nestLevel;
+                else if (jsonStr[pos] == closeChar) --nestLevel;
             }
             
             ++pos;
         }
         
-        // Возвращаем значение с открывающей и закрывающей скобками
+        // Return value with opening and closing brackets
         return jsonStr.substr(start, pos - start);
     }
     
-    // Обрабатываем простые значения (числа, булевы значения)
+    // Handle simple values (numbers, booleans)
     while (pos < jsonStr.length()) {
         if (jsonStr[pos] == ',' || jsonStr[pos] == '}' || jsonStr[pos] == ']') {
             break;
@@ -181,6 +188,103 @@ std::string WSM::JsonMin::extractJsonValue(const std::string& jsonStr, size_t& p
     return jsonStr.substr(start, pos - start);
 }
 
+std::vector<std::any> WSM::JsonMin::parseArray(const std::string& value) {
+    std::vector<std::any> arr;
+    
+    // Remove outer brackets
+    std::string inner = value;
+    if (inner.empty() || inner[0] != '[' || inner[inner.length() - 1] != ']') {
+        return arr;
+    }
+    
+    inner = inner.substr(1, inner.length() - 2);
+    
+    // If array is empty, return empty vector
+    if (inner.empty()) {
+        return arr;
+    }
+    
+    size_t pos = 0;
+    while (pos < inner.length()) {
+        // Skip whitespace
+        while (pos < inner.length() && std::isspace(inner[pos])) ++pos;
+        if (pos >= inner.length()) break;
+        
+        // Extract array element
+        size_t start = pos;
+        bool inString = false;
+        bool escaped = false;
+        int nestLevel = 0;  // Level counter for brackets [] and {}
+        
+        while (pos < inner.length()) {
+            if (escaped) {
+                escaped = false;
+                ++pos;
+                continue;
+            }
+            
+            if (inner[pos] == '\\') {
+                escaped = true;
+                ++pos;
+                continue;
+            }
+            
+            if (inner[pos] == '"' && !escaped) {
+                inString = !inString;
+                ++pos;
+                continue;
+            }
+            
+            if (!inString) {
+                if (inner[pos] == '[' || inner[pos] == '{') {
+                    ++nestLevel;
+                }
+                else if (inner[pos] == ']' || inner[pos] == '}') {
+                    --nestLevel;
+                }
+                else if (inner[pos] == ',' && nestLevel == 0) {
+                    break;
+                }
+            }
+            
+            ++pos;
+        }
+        
+        std::string element = inner.substr(start, pos - start);
+        if (!element.empty()) {
+            // Trim whitespace from the element
+            element.erase(0, element.find_first_not_of(" \t\n\r\f\v"));
+            element.erase(element.find_last_not_of(" \t\n\r\f\v") + 1);
+            
+            // Check if the element is a nested array
+            if (element[0] == '[' && element[element.length() - 1] == ']') {
+                // Parse the nested array
+                std::vector<std::any> nestedArr = parseArray(element);
+                arr.push_back(nestedArr);
+            }
+            else {
+                // Parse the element
+                std::any parsedValue = parseValue(element);
+                if (parsedValue.has_value()) {
+                    arr.push_back(parsedValue);
+                } else if (element == "null") {
+                    // Only push null if the element is explicitly "null"
+                    arr.push_back(std::any());
+                } else {
+                    // If the value couldn't be parsed and isn't explicitly null,
+                    // treat it as a string
+                    arr.push_back(element);
+                }
+            }
+        }
+        
+        // Skip comma and whitespace
+        while (pos < inner.length() && (std::isspace(inner[pos]) || inner[pos] == ',')) ++pos;
+    }
+    
+    return arr;
+}
+
 std::any WSM::JsonMin::parseValue(const std::string& value) {
     // Trim whitespace
     std::string trimmed = value;
@@ -188,131 +292,237 @@ std::any WSM::JsonMin::parseValue(const std::string& value) {
     trimmed.erase(trimmed.find_last_not_of(" \t\n\r\f\v") + 1);
     
     // Check for null
-    if (trimmed == "null" || trimmed.empty()) {
+    if (trimmed == "null") {
         return std::any();
     }
     
-    // Remove quotes if present
-    bool hasQuotes = false;
-    if (trimmed.front() == '"' && trimmed.back() == '"') {
-        trimmed = trimmed.substr(1, trimmed.length() - 2);
-        hasQuotes = true;
+    // Check for boolean
+    if (trimmed == "true") {
+        return true;
+    }
+    if (trimmed == "false") {
+        return false;
     }
     
-    // Если значение было в кавычках и после удаления кавычек стало пустым,
-    // возвращаем пустую строку
-    if (hasQuotes && trimmed.empty()) {
-        return std::string("");
-    }
-    
-    // Check for boolean (with or without quotes)
-    if (trimmed == "true" || trimmed == "false") {
-        return trimmed == "true";
-    }
-    
-    // Check for integer (with or without quotes)
-    if (std::regex_match(trimmed, std::regex(R"(-?\d+)"))) {
-        return std::stoi(trimmed);
-    }
-    
-    // Check for double (with or without quotes)
-    if (std::regex_match(trimmed, std::regex(R"(-?\d+\.\d+)"))) {
-        return std::stod(trimmed);
+    // Check for string (with or without quotes)
+    if (trimmed[0] == '"' && trimmed[trimmed.length() - 1] == '"') {
+        return trimmed.substr(1, trimmed.length() - 2);
     }
     
     // Check for array
-    if (trimmed.front() == '[' && trimmed.back() == ']') {
-        std::vector<std::any> arr;
-        std::string inner = trimmed.substr(1, trimmed.length() - 2);
-        size_t pos = 0;
-        
-        while (pos < inner.length()) {
-            // Skip whitespace
-            while (pos < inner.length() && std::isspace(inner[pos])) ++pos;
-            if (pos >= inner.length()) break;
-            
-            // Extract array element
-            size_t start = pos;
-            int bracketCount = 0;
-            int braceCount = 0;
-            bool inString = false;
-            bool escaped = false;
-            
-            while (pos < inner.length()) {
-                if (escaped) {
-                    escaped = false;
-                    ++pos;
-                    continue;
-                }
-                
-                if (inner[pos] == '\\') {
-                    escaped = true;
-                    ++pos;
-                    continue;
-                }
-                
-                if (inner[pos] == '"' && !escaped) {
-                    inString = !inString;
-                    ++pos;
-                    continue;
-                }
-                
-                if (!inString) {
-                    if (inner[pos] == '[') ++bracketCount;
-                    else if (inner[pos] == ']') --bracketCount;
-                    else if (inner[pos] == '{') ++braceCount;
-                    else if (inner[pos] == '}') --braceCount;
-                    else if (inner[pos] == ',' && bracketCount == 0 && braceCount == 0) break;
-                }
-                
-                ++pos;
-            }
-            
-            std::string element = inner.substr(start, pos - start);
-            if (!element.empty()) {
-                arr.push_back(parseValue(element));
-            }
-            
-            // Skip comma
-            while (pos < inner.length() && (std::isspace(inner[pos]) || inner[pos] == ',')) ++pos;
-        }
-        
-        return arr;
+    if (trimmed[0] == '[' && trimmed[trimmed.length() - 1] == ']') {
+        return parseArray(trimmed);
     }
     
     // Check for object
-    if (trimmed.front() == '{' && trimmed.back() == '}') {
+    if (trimmed[0] == '{' && trimmed[trimmed.length() - 1] == '}') {
         JsonMin obj(trimmed);
-        return obj.data;
+        return obj.getData();
     }
     
-    // If it was a quoted string, return it as is
-    if (hasQuotes) {
-        return trimmed;
+    // Check for number
+    std::regex intPattern(R"(-?\d+)");
+    std::regex doublePattern(R"(-?\d+\.\d+)");
+    std::regex scientificPattern1(R"(-?\d+[eE][+-]?\d+)");
+    std::regex scientificPattern2(R"(-?\d+\.\d+[eE][+-]?\d+)");
+    
+    if (std::regex_match(trimmed, scientificPattern1) || 
+        std::regex_match(trimmed, scientificPattern2)) {
+        return std::stod(trimmed);
+    }
+    else if (std::regex_match(trimmed, doublePattern)) {
+        return std::stod(trimmed);
+    }
+    else if (std::regex_match(trimmed, intPattern)) {
+        return std::stoi(trimmed);
     }
     
-    // Default to string
+    // If none of the above, treat as string
     return trimmed;
+}
+
+WSM::JsonType WSM::JsonMin::determineType(const std::string& value) const {
+    // Trim whitespace
+    std::string trimmed = value;
+    trimmed.erase(0, trimmed.find_first_not_of(" \t\n\r\f\v"));
+    trimmed.erase(trimmed.find_last_not_of(" \t\n\r\f\v") + 1);
+    
+    if (trimmed == "null") return JsonType::NULL_TYPE;
+    if (trimmed == "true" || trimmed == "false") return JsonType::BOOL;
+    
+    if (trimmed[0] == '"' && trimmed[trimmed.length() - 1] == '"') {
+        return JsonType::STRING;
+    }
+    
+    if (trimmed[0] == '[' && trimmed[trimmed.length() - 1] == ']') {
+        return JsonType::ARRAY;
+    }
+    
+    if (trimmed[0] == '{' && trimmed[trimmed.length() - 1] == '}') {
+        return JsonType::OBJECT;
+    }
+    
+    // Check for number
+    std::regex intPattern(R"(-?\d+)");
+    std::regex doublePattern(R"(-?\d+\.\d+)");
+    std::regex scientificPattern(R"(-?\d+(\.\d+)?[eE][+-]?\d+)");
+    
+    if (std::regex_match(trimmed, doublePattern) || 
+        std::regex_match(trimmed, scientificPattern)) {
+        return JsonType::DOUBLE;
+    }
+    if (std::regex_match(trimmed, intPattern)) {
+        return JsonType::INT;
+    }
+    
+    return JsonType::STRING;
 }
 
 std::any WSM::JsonMin::operator[](const std::string& key) const {
     auto it = data.find(key);
-    return (it != data.end()) ? it->second : std::any();
+    if (it != data.end()) {
+        return it->second;
+    }
+    return std::any();
 }
 
 std::any WSM::JsonMin::getValue(const std::string& path) const {
     return getNestedValue(path);
 }
 
+std::any WSM::JsonMin::getNestedValue(const std::string& path) const {
+    std::vector<std::string> parts = splitPath(path);
+    
+    const std::map<std::string, std::any>* currentObj = &data;
+    std::any currentValue;
+    
+    for (size_t i = 0; i < parts.size(); ++i) {
+        auto it = currentObj->find(parts[i]);
+        if (it == currentObj->end()) {
+            return std::any();
+        }
+        
+        if (i == parts.size() - 1) {
+            return it->second;
+        }
+        
+        try {
+            currentObj = &std::any_cast<const std::map<std::string, std::any>&>(it->second);
+        }
+        catch (const std::bad_any_cast&) {
+            return std::any();
+        }
+    }
+    
+    return std::any();
+}
+
+std::vector<std::string> WSM::JsonMin::splitPath(const std::string& path) const {
+    std::vector<std::string> parts;
+    std::stringstream ss(path);
+    std::string part;
+    
+    while (std::getline(ss, part, '.')) {
+        if (!part.empty()) {
+            parts.push_back(part);
+        }
+    }
+    
+    return parts;
+}
+
+void WSM::JsonMin::traverse(const std::function<void(const std::string& path, const std::any& value, JsonType type)>& callback, 
+                          const std::string& prefix) const {
+    traverseHelper(data, callback, prefix);
+}
+
+void WSM::JsonMin::traverseHelper(const std::map<std::string, std::any>& obj, 
+                                const std::function<void(const std::string& path, const std::any& value, JsonType type)>& callback,
+                                const std::string& prefix) const {
+    for (const auto& pair : obj) {
+        std::string currentPath = prefix.empty() ? pair.first : prefix + "." + pair.first;
+        
+        if (pair.second.type() == typeid(std::map<std::string, std::any>)) {
+            callback(currentPath, pair.second, JsonType::OBJECT);
+            traverseHelper(std::any_cast<const std::map<std::string, std::any>&>(pair.second), callback, currentPath);
+        }
+        else if (pair.second.type() == typeid(std::vector<std::any>)) {
+            callback(currentPath, pair.second, JsonType::ARRAY);
+            const auto& arr = std::any_cast<const std::vector<std::any>&>(pair.second);
+            for (size_t i = 0; i < arr.size(); ++i) {
+                std::string arrayPath = currentPath + "[" + std::to_string(i) + "]";
+                JsonType type;
+                
+                if (arr[i].type() == typeid(std::map<std::string, std::any>)) {
+                    type = JsonType::OBJECT;
+                    callback(arrayPath, arr[i], type);
+                    traverseHelper(std::any_cast<const std::map<std::string, std::any>&>(arr[i]), callback, arrayPath);
+                }
+                else if (arr[i].type() == typeid(std::vector<std::any>)) {
+                    type = JsonType::ARRAY;
+                    callback(arrayPath, arr[i], type);
+                    const auto& nestedArr = std::any_cast<const std::vector<std::any>&>(arr[i]);
+                    for (size_t j = 0; j < nestedArr.size(); ++j) {
+                        std::string nestedArrayPath = arrayPath + "[" + std::to_string(j) + "]";
+                        JsonType nestedType;
+                        
+                        if (nestedArr[j].type() == typeid(bool)) nestedType = JsonType::BOOL;
+                        else if (nestedArr[j].type() == typeid(int)) nestedType = JsonType::INT;
+                        else if (nestedArr[j].type() == typeid(double)) nestedType = JsonType::DOUBLE;
+                        else if (nestedArr[j].type() == typeid(std::string)) nestedType = JsonType::STRING;
+                        else if (nestedArr[j].type() == typeid(std::vector<std::any>)) nestedType = JsonType::ARRAY;
+                        else if (nestedArr[j].type() == typeid(std::map<std::string, std::any>)) nestedType = JsonType::OBJECT;
+                        else if (!nestedArr[j].has_value()) nestedType = JsonType::NULL_TYPE;
+                        else nestedType = JsonType::STRING;
+                        
+                        callback(nestedArrayPath, nestedArr[j], nestedType);
+                        
+                        if (nestedType == JsonType::OBJECT) {
+                            traverseHelper(std::any_cast<const std::map<std::string, std::any>&>(nestedArr[j]), callback, nestedArrayPath);
+                        }
+                    }
+                }
+                else {
+                    if (arr[i].type() == typeid(bool)) type = JsonType::BOOL;
+                    else if (arr[i].type() == typeid(int)) type = JsonType::INT;
+                    else if (arr[i].type() == typeid(double)) type = JsonType::DOUBLE;
+                    else if (arr[i].type() == typeid(std::string)) type = JsonType::STRING;
+                    else if (!arr[i].has_value()) type = JsonType::NULL_TYPE;
+                    else type = JsonType::STRING;
+                    
+                    callback(arrayPath, arr[i], type);
+                }
+            }
+        }
+        else {
+            JsonType type;
+            if (pair.second.type() == typeid(bool)) type = JsonType::BOOL;
+            else if (pair.second.type() == typeid(int)) type = JsonType::INT;
+            else if (pair.second.type() == typeid(double)) type = JsonType::DOUBLE;
+            else if (pair.second.type() == typeid(std::string)) type = JsonType::STRING;
+            else if (pair.second.type() == typeid(std::vector<std::any>)) type = JsonType::ARRAY;
+            else if (!pair.second.has_value()) type = JsonType::NULL_TYPE;
+            else type = JsonType::STRING;
+            
+            callback(currentPath, pair.second, type);
+        }
+    }
+}
+
 WSM::JsonType WSM::JsonMin::getType(const std::string& key) const {
     auto it = data.find(key);
-    if (it == data.end()) return JsonType::NULL_TYPE;
-    if (it->second.type() == typeid(bool)) return JsonType::BOOL;
-    if (it->second.type() == typeid(int)) return JsonType::INT;
-    if (it->second.type() == typeid(double)) return JsonType::DOUBLE;
-    if (it->second.type() == typeid(std::string)) return JsonType::STRING;
-    if (it->second.type() == typeid(std::vector<std::any>)) return JsonType::ARRAY;
-    if (it->second.type() == typeid(std::map<std::string, std::any>)) return JsonType::OBJECT;
+    if (it == data.end()) {
+        return JsonType::NULL_TYPE;
+    }
+    
+    const std::any& value = it->second;
+    
+    if (value.type() == typeid(bool)) return JsonType::BOOL;
+    if (value.type() == typeid(int)) return JsonType::INT;
+    if (value.type() == typeid(double)) return JsonType::DOUBLE;
+    if (value.type() == typeid(std::string)) return JsonType::STRING;
+    if (value.type() == typeid(std::vector<std::any>)) return JsonType::ARRAY;
+    if (value.type() == typeid(std::map<std::string, std::any>)) return JsonType::OBJECT;
     
     return JsonType::NULL_TYPE;
 }
@@ -342,162 +552,52 @@ bool WSM::JsonMin::isObject(const std::string& key) const {
 }
 
 bool WSM::JsonMin::isNull(const std::string& key) const {
-    auto it = data.find(key);
-    if (it == data.end()) return true;
-    return !it->second.has_value();
+    return getType(key) == JsonType::NULL_TYPE;
 }
 
-std::any WSM::JsonMin::getNestedValue(const std::string& path) const {
-    auto parts = splitPath(path);
-    if (parts.empty()) return std::any();
-    
-    const JsonMin* current = this;
-    std::any value = (*current)[parts[0]];
-    
-    for (size_t i = 1; i < parts.size(); ++i) {
-        if (value.type() == typeid(std::map<std::string, std::any>)) {
-            const auto& map = std::any_cast<const std::map<std::string, std::any>&>(value);
-            auto it = map.find(parts[i]);
-            if (it == map.end()) return std::any();
-            value = it->second;
-        } else {
-            return std::any();
-        }
-    }
-    
-    return value;
-}
-
-std::vector<std::string> WSM::JsonMin::splitPath(const std::string& path) const {
-    std::vector<std::string> result;
-    std::stringstream ss(path);
-    std::string item;
-    
-    while (std::getline(ss, item, '.')) {
-        if (!item.empty()) {
-            result.push_back(item);
-        }
-    }
-    
-    return result;
-}
-
-void WSM::JsonMin::traverse(const std::function<void(const std::string& path, const std::any& value, JsonType type)>& callback, 
-                      const std::string& prefix) const {
-    traverseHelper(data, callback, prefix);
-}
-
-void WSM::JsonMin::traverseHelper(const std::map<std::string, std::any>& obj, 
-                           const std::function<void(const std::string& path, const std::any& value, JsonType type)>& callback,
-                           const std::string& prefix) const {
-    for (const auto& [key, value] : obj) {
-        std::string path = prefix.empty() ? key : prefix + "." + key;
-        
-        // Determine type
-        JsonType type = JsonType::NULL_TYPE;
-        if (value.type() == typeid(bool)) type = JsonType::BOOL;
-        else if (value.type() == typeid(int)) type = JsonType::INT;
-        else if (value.type() == typeid(double)) type = JsonType::DOUBLE;
-        else if (value.type() == typeid(std::string)) type = JsonType::STRING;
-        else if (value.type() == typeid(std::vector<std::any>)) type = JsonType::ARRAY;
-        else if (value.type() == typeid(std::map<std::string, std::any>)) type = JsonType::OBJECT;
-        
-        // Call the callback
-        callback(path, value, type);
-        
-        // Recursively traverse objects and arrays
-        if (type == JsonType::OBJECT) {
-            const auto& map = std::any_cast<const std::map<std::string, std::any>&>(value);
-            traverseHelper(map, callback, path);
-        } else if (type == JsonType::ARRAY) {
-            const auto& arr = std::any_cast<const std::vector<std::any>&>(value);
-            for (size_t i = 0; i < arr.size(); ++i) {
-                if (arr[i].type() == typeid(std::map<std::string, std::any>)) {
-                    const auto& map = std::any_cast<const std::map<std::string, std::any>&>(arr[i]);
-                    std::string arrayPath = path + "[" + std::to_string(i) + "]";
-                    traverseHelper(map, callback, arrayPath);
-                }
-            }
-        }
-    }
-}
-
-// New utility methods implementation
 int WSM::JsonMin::getSize(const std::string& key) const {
     if (key.empty()) {
-        // If key is empty, return the size of the root object
         return data.size();
     }
     
     auto value = getValue(key);
+    if (!value.has_value()) {
+        return 0;
+    }
+    
     if (value.type() == typeid(std::vector<std::any>)) {
         return std::any_cast<const std::vector<std::any>&>(value).size();
-    } else if (value.type() == typeid(std::map<std::string, std::any>)) {
+    }
+    else if (value.type() == typeid(std::map<std::string, std::any>)) {
         return std::any_cast<const std::map<std::string, std::any>&>(value).size();
     }
     
-    return -1; // Not a container type
+    return 0;
 }
 
 bool WSM::JsonMin::empty(const std::string& key) const {
-    if (key.empty()) {
-        // If key is empty, check if the root object is empty
-        return data.empty();
-    }
-    
-    auto value = getValue(key);
-    if (value.type() == typeid(std::vector<std::any>)) {
-        return std::any_cast<const std::vector<std::any>&>(value).empty();
-    } else if (value.type() == typeid(std::map<std::string, std::any>)) {
-        return std::any_cast<const std::map<std::string, std::any>&>(value).empty();
-    }
-    
-    return !value.has_value(); // For non-container types, check if it's null
+    return getSize(key) == 0;
 }
 
 bool WSM::JsonMin::hasField(const std::string& key) const {
-    if (key.empty()) return false;
-    
-    auto parts = splitPath(key);
-    if (parts.empty()) return false;
-    
-    auto it = data.find(parts[0]);
-    if (it == data.end()) return false;
-    
-    if (parts.size() == 1) return true;
-    
-    // For nested fields
-    std::any value = it->second;
-    for (size_t i = 1; i < parts.size(); ++i) {
-        if (value.type() == typeid(std::map<std::string, std::any>)) {
-            const auto& map = std::any_cast<const std::map<std::string, std::any>&>(value);
-            auto nestedIt = map.find(parts[i]);
-            if (nestedIt == map.end()) return false;
-            value = nestedIt->second;
-        } else {
-            return false;
-        }
-    }
-    
-    return true;
+    return data.find(key) != data.end();
 }
 
 std::vector<std::string> WSM::JsonMin::getFields(const std::string& key) const {
     std::vector<std::string> fields;
     
     if (key.empty()) {
-        // If key is empty, return fields of the root object
-        for (const auto& [field, _] : data) {
-            fields.push_back(field);
+        for (const auto& pair : data) {
+            fields.push_back(pair.first);
         }
-        return fields;
     }
-    
-    auto value = getValue(key);
-    if (value.type() == typeid(std::map<std::string, std::any>)) {
-        const auto& map = std::any_cast<const std::map<std::string, std::any>&>(value);
-        for (const auto& [field, _] : map) {
-            fields.push_back(field);
+    else {
+        auto value = getValue(key);
+        if (value.has_value() && value.type() == typeid(std::map<std::string, std::any>)) {
+            const auto& obj = std::any_cast<const std::map<std::string, std::any>&>(value);
+            for (const auto& pair : obj) {
+                fields.push_back(pair.first);
+            }
         }
     }
     
@@ -506,12 +606,13 @@ std::vector<std::string> WSM::JsonMin::getFields(const std::string& key) const {
 
 std::string WSM::JsonMin::getTypeName(JsonType type) const {
     switch (type) {
-        case JsonType::BOOL: return "bool";
-        case JsonType::INT: return "int";
+        case JsonType::NULL_TYPE: return "null";
+        case JsonType::BOOL: return "boolean";
+        case JsonType::INT: return "integer";
         case JsonType::DOUBLE: return "double";
         case JsonType::STRING: return "string";
         case JsonType::ARRAY: return "array";
         case JsonType::OBJECT: return "object";
-        default: return "null";
+        default: return "unknown";
     }
-}
+} 
