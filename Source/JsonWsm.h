@@ -13,6 +13,7 @@ enum class JsonType {
     NULL_TYPE,
     BOOL,
     INT,
+    FLOAT,
     DOUBLE,
     STRING,
     ARRAY,
@@ -35,6 +36,7 @@ public:
     JsonType getType(const std::string& key) const;
     bool isBool(const std::string& key) const;
     bool isInt(const std::string& key) const;
+    bool isFloat(const std::string& key) const;
     bool isDouble(const std::string& key) const;
     bool isString(const std::string& key) const;
     bool isArray(const std::string& key) const;

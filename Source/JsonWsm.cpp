@@ -320,6 +320,21 @@ std::any WSM::JsonMin::parseValue(const std::string& value) {
         return obj.getData();
     }
     
+    // Check for float (with f/F suffix)
+    if (trimmed.back() == 'f' || trimmed.back() == 'F') {
+        std::string numStr = trimmed.substr(0, trimmed.length() - 1);
+        // Count decimal places
+        size_t decimalPos = numStr.find('.');
+        if (decimalPos != std::string::npos) {
+            size_t decimalPlaces = numStr.length() - decimalPos - 1;
+            if (decimalPlaces <= 7) {
+                return std::stof(numStr);
+            }
+        }
+        // If more than 7 decimal places, treat as double
+        return std::stod(numStr);
+    }
+    
     // Check for number
     std::regex intPattern(R"(-?\d+)");
     std::regex doublePattern(R"(-?\d+\.\d+)");
@@ -360,6 +375,19 @@ WSM::JsonType WSM::JsonMin::determineType(const std::string& value) const {
     
     if (trimmed[0] == '{' && trimmed[trimmed.length() - 1] == '}') {
         return JsonType::OBJECT;
+    }
+    
+    // Check for float (with f/F suffix)
+    if (trimmed.back() == 'f' || trimmed.back() == 'F') {
+        std::string numStr = trimmed.substr(0, trimmed.length() - 1);
+        size_t decimalPos = numStr.find('.');
+        if (decimalPos != std::string::npos) {
+            size_t decimalPlaces = numStr.length() - decimalPos - 1;
+            if (decimalPlaces <= 7) {
+                return JsonType::FLOAT;
+            }
+        }
+        return JsonType::DOUBLE;
     }
     
     // Check for number
@@ -609,10 +637,15 @@ std::string WSM::JsonMin::getTypeName(JsonType type) const {
         case JsonType::NULL_TYPE: return "null";
         case JsonType::BOOL: return "boolean";
         case JsonType::INT: return "integer";
+        case JsonType::FLOAT: return "float";
         case JsonType::DOUBLE: return "double";
         case JsonType::STRING: return "string";
         case JsonType::ARRAY: return "array";
         case JsonType::OBJECT: return "object";
         default: return "unknown";
     }
+} 
+
+bool WSM::JsonMin::isFloat(const std::string& key) const {
+    return getType(key) == JsonType::FLOAT;
 } 
