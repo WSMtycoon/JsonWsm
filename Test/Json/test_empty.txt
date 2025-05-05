@@ -1,0 +1,22 @@
+{
+	"name": "Test Object",
+	"values": [1, 2, 3, 4, 5,],
+	"nested": {
+		"array": [
+		{"key": "value1"},
+		{"key": "value2"},
+		{"key": "value3"}
+		],
+		"mixed": [true, 42, "string", {"obj": "inside"}]
+	},
+	"nullValues": {
+		"key1": null,
+		"key2": Null,
+		"key3": "null"
+		"key4": "Null",
+	},
+	"booleanValues": [true, false, "true", "false"],
+	"empty":,
+	"emptyArray": [],
+	"emptyObject": {},
+} 

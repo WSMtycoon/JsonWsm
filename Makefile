@@ -1,31 +1,59 @@
 CXX = g++
-CXXFLAGS = -std=c++17 -Wall -Wextra
-OBJ_DIR = Object
-SRC_DIR = Source
-TEST_DIR = Test
-BIN_DIR = bin
+CXXFLAGS = -std=c++17 -I.
+LDFLAGS = 
 
+# Directories
+SRC_DIR = Source
+TEST_DIR = Test/Source
+BIN_DIR = bin
+OBJ_DIR = Object
+
+# Source files
 SRCS = $(wildcard $(SRC_DIR)/*.cpp)
 TEST_SRCS = $(wildcard $(TEST_DIR)/*.cpp)
-OBJS = $(SRCS:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
-TEST_OBJS = $(TEST_SRCS:$(TEST_DIR)/%.cpp=$(OBJ_DIR)/%.o)
-TARGET = $(BIN_DIR)/json_test
 
-.PHONY: all clean
+# Object files
+OBJS = $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SRCS))
+TEST_PARSER_OBJ = $(OBJ_DIR)/test_parser.o
+TEST_STRUCT_OBJ = $(OBJ_DIR)/test_struct.o
 
-all: $(TARGET)
+# Executables
+TEST_PARSER_EXE = $(BIN_DIR)/test_parser.exe
+TEST_STRUCT_EXE = $(BIN_DIR)/test_struct.exe
 
-$(TARGET): $(OBJS) $(TEST_OBJS)
-	@mkdir -p $(BIN_DIR)
-	$(CXX) $(OBJS) $(TEST_OBJS) -o $(TARGET)
+# Default target
+all: clean_bin $(TEST_PARSER_EXE) $(TEST_STRUCT_EXE)
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
-	@mkdir -p $(OBJ_DIR)
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+# Create directories if they don't exist
+$(OBJ_DIR) $(BIN_DIR):
+	mkdir -p $@
 
-$(OBJ_DIR)/%.o: $(TEST_DIR)/%.cpp
-	@mkdir -p $(OBJ_DIR)
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+# Clean only bin directory
+clean_bin:
+	rm -rf $(BIN_DIR)
+	mkdir -p $(BIN_DIR)
 
+# Clean everything
 clean:
-	rm -rf $(OBJ_DIR) $(BIN_DIR)
+	rm -rf $(BIN_DIR) $(OBJ_DIR)
+
+# Compile source files
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+# Compile test files
+$(OBJ_DIR)/test_parser.o: $(TEST_DIR)/test_parser.cpp | $(OBJ_DIR)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(OBJ_DIR)/test_struct.o: $(TEST_DIR)/test_struct.cpp | $(OBJ_DIR)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+# Link test_parser executable
+$(TEST_PARSER_EXE): $(TEST_PARSER_OBJ) $(OBJS) | $(BIN_DIR)
+	$(CXX) $(LDFLAGS) $^ -o $@
+
+# Link test_struct executable
+$(TEST_STRUCT_EXE): $(TEST_STRUCT_OBJ) $(OBJS) | $(BIN_DIR)
+	$(CXX) $(LDFLAGS) $^ -o $@
+
+.PHONY: all clean clean_bin

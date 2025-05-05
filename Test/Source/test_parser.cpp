@@ -1,4 +1,4 @@
-#include "../Source/JsonWSM.h"
+#include "../../Source/JsonWSM.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>

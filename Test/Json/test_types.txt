@@ -1,0 +1,16 @@
+{
+	"string": "Hello, World!",
+	"integer": 42,
+	"float": 3.14f,
+	"double": 3.1415926535,
+	"boolean_true": true,
+	"boolean_false": false,
+	"null_value": null,
+	"array": [1, 2, 3, 4, 5],
+	"nested_array": [[1, 2], [3, 4], [5, 6]],
+	"object": { "key": "value" }
+	"nested_object": { 
+	"base": { "key1": "value", "key2": "value", "key3": "value" }, 
+	"base_key": { "key": "value", "key": "value", "key": "value" } 
+	}
+} 

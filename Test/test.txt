@@ -1,25 +1,52 @@
 {
-  "Null": ,
-  "isAccess": false,
-  "isActive": true,
-  "count": 42,
-  "price": 19.99,
-  "tags": ["new", "sale", "popular"],
-  "dimensions": {
-    "width": "15.5",
-    "height": 10.2,
-    "depth": 5000.0
-  },
-  "items": [
-    {
-      "id": 1,
-      "name": "Product A",
-      "inStock": false
-    },
-    {
-      "id": 2,
-      "name": "Product B",
-      "inStock": true
-    }
-  ]
-}
+	"Commit": "# Test file for structure testing",
+	"Commit": "# This test verifies object structure, nested objects, arrays, and type handling",
+	"user": {
+		"id": 1,
+		"name": "John Doe",
+		"profile": {
+		"age": 30,
+		"address": {
+			"street": "123 Main St",
+			"city": "New York",
+			"coordinates": {
+			"latitude": 40.7128f,
+			"longitude": -74.0060f
+			}
+		}
+		}
+	},
+	"nested_arrays": [
+		[
+		[1, 2, 3],
+		[4, 5, 6]
+		],
+		[
+		[7, 8, 9],
+		[10, 11, 12]
+		]
+	],
+	"mixed_structures": [
+		{
+		"array": [1, 2, 3],
+		"object": {
+			"nested_array": [[1, 2], [3, 4]]
+		}
+		}
+	],
+		"nestedArrays": [
+		[1, 2, 3],
+		["a", "b", "c"],
+		[true, false, null],
+		[{"key": "value"}, {"key": 42}]
+	],
+	"nestedObjects": {
+		"level1": {
+		"level2": {
+			"level3": {
+			"value": "deep"
+			}
+		}
+		}
+	}
+} 
