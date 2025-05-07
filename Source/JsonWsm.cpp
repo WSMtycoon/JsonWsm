@@ -409,56 +409,6 @@ std::any WSM::JsonMin::parseValue(const std::string& value) {
     return trimmed;
 }
 
-WSM::JsonType WSM::JsonMin::determineType(const std::string& value) const {
-    // Trim whitespace
-    std::string trimmed = value;
-    trimmed.erase(0, trimmed.find_first_not_of(" \t\n\r\f\v"));
-    trimmed.erase(trimmed.find_last_not_of(" \t\n\r\f\v") + 1);
-    
-    if (trimmed == "null") return JsonType::NULL_TYPE;
-    if (trimmed == "true" || trimmed == "false") return JsonType::BOOL;
-    
-    if (trimmed[0] == '"' && trimmed[trimmed.length() - 1] == '"') {
-        return JsonType::STRING;
-    }
-    
-    if (trimmed[0] == '[' && trimmed[trimmed.length() - 1] == ']') {
-        return JsonType::ARRAY;
-    }
-    
-    if (trimmed[0] == '{' && trimmed[trimmed.length() - 1] == '}') {
-        return JsonType::OBJECT;
-    }
-    
-    // Check for float (with f/F suffix)
-    if (trimmed.back() == 'f' || trimmed.back() == 'F') {
-        std::string numStr = trimmed.substr(0, trimmed.length() - 1);
-        size_t decimalPos = numStr.find('.');
-        if (decimalPos != std::string::npos) {
-            size_t decimalPlaces = numStr.length() - decimalPos - 1;
-            if (decimalPlaces <= 7) {
-                return JsonType::FLOAT;
-            }
-        }
-        return JsonType::DOUBLE;
-    }
-    
-    // Check for number
-    std::regex intPattern(R"(-?\d+)");
-    std::regex doublePattern(R"(-?\d+\.\d+)");
-    std::regex scientificPattern(R"(-?\d+(\.\d+)?[eE][+-]?\d+)");
-    
-    if (std::regex_match(trimmed, doublePattern) || 
-        std::regex_match(trimmed, scientificPattern)) {
-        return JsonType::DOUBLE;
-    }
-    if (std::regex_match(trimmed, intPattern)) {
-        return JsonType::INT;
-    }
-    
-    return JsonType::STRING;
-}
-
 std::any WSM::JsonMin::operator[](const std::string& key) const {
     auto it = data.find(key);
     if (it != data.end()) {
@@ -468,10 +418,6 @@ std::any WSM::JsonMin::operator[](const std::string& key) const {
 }
 
 std::any WSM::JsonMin::getValue(const std::string& path) const {
-    return getNestedValue(path);
-}
-
-std::any WSM::JsonMin::getNestedValue(const std::string& path) const {
     std::vector<std::string> parts = splitPath(path);
     
     const std::map<std::string, std::any>* currentObj = &data;
@@ -483,18 +429,12 @@ std::any WSM::JsonMin::getNestedValue(const std::string& path) const {
             return std::any();
         }
         
-        if (i == parts.size() - 1) {
-            return it->second;
-        }
+        if (i == parts.size() - 1) { return it->second; }
         
-        try {
-            currentObj = &std::any_cast<const std::map<std::string, std::any>&>(it->second);
-        }
-        catch (const std::bad_any_cast&) {
-            return std::any();
-        }
+        try { currentObj = &std::any_cast<const std::map<std::string, std::any>&>(it->second); }
+        catch (const std::bad_any_cast&) { return std::any(); }
     }
-    
+
     return std::any();
 }
 

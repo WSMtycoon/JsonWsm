@@ -66,8 +66,6 @@ private:
     // Helper methods
     void parseJson(const std::string& jsonStr);
     std::any parseValue(const std::string& value);
-    JsonType determineType(const std::string& value) const;
-    std::any getNestedValue(const std::string& path) const;
     std::vector<std::string> splitPath(const std::string& path) const;
     
     // New helper methods for improved parsing
