@@ -344,12 +344,13 @@ std::any WSM::JsonMin::parseValue(const std::string& value) {
         return std::any();
     }
     
-    // Check for boolean
-    if (trimmed == "true") {
-        return true;
-    }
-    if (trimmed == "false") {
-        return false;
+    // Check for boolean (case insensitive)
+    std::string lowerTrimmed = trimmed;
+    std::transform(lowerTrimmed.begin(), lowerTrimmed.end(), lowerTrimmed.begin(), ::tolower);
+    
+    if (lowerTrimmed == "true" || lowerTrimmed == "false" || 
+        lowerTrimmed == "\"true\"" || lowerTrimmed == "\"false\"") {
+        return lowerTrimmed == "true" || lowerTrimmed == "\"true\"";
     }
     
     // Check for string (with or without quotes)

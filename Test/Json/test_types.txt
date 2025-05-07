@@ -3,8 +3,12 @@
 	"integer": 42,
 	"float": 3.14f,
 	"double": 3.1415926535,
-	"boolean_true": true,
-	"boolean_false": false,
+	"boolean":{
+	"true": true,
+	"false": false,
+	"True": True,
+	"Array":[False,"TRUE", "false"]
+	},
 	"null_value": null,
 	"array": [1, 2, 3, 4, 5],
 	"nested_array": [[1, 2], [3, 4], [5, 6]],
