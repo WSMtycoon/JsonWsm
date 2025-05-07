@@ -12,16 +12,59 @@ WSM::JsonMin::JsonMin(const std::string& jsonStr) {
 }
 
 void WSM::JsonMin::parseJson(const std::string& jsonStr) {
+    // Reset parsing state
+    correctlyParsed = true;
+    
     // Trim whitespace
     std::string trimmed = jsonStr;
     trimmed.erase(0, trimmed.find_first_not_of(" \t\n\r\f\v"));
     trimmed.erase(trimmed.find_last_not_of(" \t\n\r\f\v") + 1);
     
-    // Check if the string is empty or doesn't represent an object
-    if (trimmed.empty() || trimmed[0] != '{' || trimmed[trimmed.length() - 1] != '}') {
+    // Check if the string is empty
+    if (trimmed.empty()) {
+        correctlyParsed = false;
         return;
     }
     
+    // Validate overall structure
+    if (trimmed[0] != '{' || trimmed[trimmed.length() - 1] != '}') {
+        correctlyParsed = false;
+        return;
+    }
+
+	// Check bracket balance
+    int bracketCount = 0;
+    bool inString = false;
+    bool escaped = false;
+    
+	for (size_t i = 0; i < trimmed.length(); ++i) {
+		char c = trimmed[i];
+		
+		if (escaped) { escaped = false; continue; }
+		
+		if (c == '\\') { escaped = true; continue; }
+		
+		if (c == '"' && !escaped) { inString = !inString; continue; }
+		
+		if (!inString) {
+			if (c == '{') { bracketCount++; }
+			else if (c == '}') { 
+				bracketCount--;
+				if (bracketCount < 0) { correctlyParsed = false; return; } 
+			} 
+			else if (c == '[') { bracketCount++;} 
+			else if (c == ']') {
+				bracketCount--;
+				if (bracketCount < 0) { correctlyParsed = false; return; }
+			}
+		}
+	}
+
+    if (bracketCount != 0) {
+        correctlyParsed = false;
+        return;
+    }
+
     // Remove the outer braces
     trimmed = trimmed.substr(1, trimmed.length() - 2);
     
@@ -30,6 +73,10 @@ void WSM::JsonMin::parseJson(const std::string& jsonStr) {
     
     // Parse each key-value pair
     for (const auto& pair : pairs) {
+        if (pair.first.empty() || pair.second.empty()) {
+            correctlyParsed = false;
+            return;
+        }
         data[pair.first] = parseValue(pair.second);
     }
 }
@@ -55,7 +102,7 @@ std::vector<std::pair<std::string, std::string>> WSM::JsonMin::splitJsonObject(c
         std::string value = extractJsonValue(jsonStr, pos);
         if (!value.empty()) {
             pairs.emplace_back(key, value);
-        }
+        } 
         
         // Skip comma and whitespace
         while (pos < jsonStr.length() && (std::isspace(jsonStr[pos]) || jsonStr[pos] == ',')) ++pos;
@@ -99,7 +146,10 @@ std::string WSM::JsonMin::extractJsonKey(const std::string& jsonStr, size_t& pos
 std::string WSM::JsonMin::extractJsonValue(const std::string& jsonStr, size_t& pos) {
     // Skip whitespace
     while (pos < jsonStr.length() && std::isspace(jsonStr[pos])) ++pos;
-    if (pos >= jsonStr.length()) return "";
+	if (pos >= jsonStr.length()) {
+        correctlyParsed = false;
+        return "";
+    }
     
     size_t start = pos;
     bool inString = false;
@@ -169,15 +219,13 @@ std::string WSM::JsonMin::extractJsonValue(const std::string& jsonStr, size_t& p
                 if (jsonStr[pos] == openChar) ++nestLevel;
                 else if (jsonStr[pos] == closeChar) --nestLevel;
             }
-            
             ++pos;
         }
-        
         // Return value with opening and closing brackets
         return jsonStr.substr(start, pos - start);
     }
     
-    // Handle simple values (numbers, booleans)
+    // Handle simple values (numbers, booleans, null)
     while (pos < jsonStr.length()) {
         if (jsonStr[pos] == ',' || jsonStr[pos] == '}' || jsonStr[pos] == ']') {
             break;
@@ -323,16 +371,20 @@ std::any WSM::JsonMin::parseValue(const std::string& value) {
     // Check for float (with f/F suffix)
     if (trimmed.back() == 'f' || trimmed.back() == 'F') {
         std::string numStr = trimmed.substr(0, trimmed.length() - 1);
-        // Count decimal places
+        // Check for scientific notation
+        if (numStr.find('e') != std::string::npos || numStr.find('E') != std::string::npos) {
+            return std::stof(numStr);
+        }
+        // Count decimal places for non-scientific notation
         size_t decimalPos = numStr.find('.');
         if (decimalPos != std::string::npos) {
             size_t decimalPlaces = numStr.length() - decimalPos - 1;
-            if (decimalPlaces <= 7) {
+            if (decimalPlaces <= 6) { // Standard float precision
                 return std::stof(numStr);
             }
         }
-        // If more than 7 decimal places, treat as double
-        return std::stod(numStr);
+        // If more than 6 decimal places or no decimal point, treat as float
+        return std::stof(numStr);
     }
     
     // Check for number

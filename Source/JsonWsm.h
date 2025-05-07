@@ -56,9 +56,12 @@ public:
     bool hasField(const std::string& key) const;
     std::vector<std::string> getFields(const std::string& key = "") const;
     std::string getTypeName(JsonType type) const;
+    bool isCorrectly() const { return correctlyParsed; }
 
 private:
     std::map<std::string, std::any> data;
+    bool correctlyParsed = true;
+	bool CheckBracketBalance(const std::string& jsonStr);
     
     // Helper methods
     void parseJson(const std::string& jsonStr);
