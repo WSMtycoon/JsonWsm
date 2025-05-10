@@ -2,6 +2,7 @@
 #include <regex>
 #include <sstream>
 #include <iostream>
+#include <limits>
 
 WSM::JsonMin::JsonMin() {}
 
@@ -241,16 +242,12 @@ std::vector<std::any> WSM::JsonMin::parseArray(const std::string& value) {
     
     // Remove outer brackets
     std::string inner = value;
-    if (inner.empty() || inner[0] != '[' || inner[inner.length() - 1] != ']') {
-        return arr;
-    }
+    if (inner.empty() || inner[0] != '[' || inner[inner.length() - 1] != ']') { return arr; }
     
     inner = inner.substr(1, inner.length() - 2);
     
     // If array is empty, return empty vector
-    if (inner.empty()) {
-        return arr;
-    }
+    if (inner.empty()) { return arr; }
     
     size_t pos = 0;
     while (pos < inner.length()) {
@@ -265,36 +262,16 @@ std::vector<std::any> WSM::JsonMin::parseArray(const std::string& value) {
         int nestLevel = 0;  // Level counter for brackets [] and {}
         
         while (pos < inner.length()) {
-            if (escaped) {
-                escaped = false;
-                ++pos;
-                continue;
-            }
+            if (escaped) { escaped = false; ++pos; continue; }
             
-            if (inner[pos] == '\\') {
-                escaped = true;
-                ++pos;
-                continue;
-            }
+            if (inner[pos] == '\\') { escaped = true; ++pos; continue; }
             
-            if (inner[pos] == '"' && !escaped) {
-                inString = !inString;
-                ++pos;
-                continue;
-            }
+            if (inner[pos] == '"' && !escaped) { inString = !inString; ++pos; continue; }
             
-            if (!inString) {
-                if (inner[pos] == '[' || inner[pos] == '{') {
-                    ++nestLevel;
-                }
-                else if (inner[pos] == ']' || inner[pos] == '}') {
-                    --nestLevel;
-                }
-                else if (inner[pos] == ',' && nestLevel == 0) {
-                    break;
-                }
+            if (!inString) { if (inner[pos] == '[' || inner[pos] == '{') { ++nestLevel; }
+                else if (inner[pos] == ']' || inner[pos] == '}') { --nestLevel; }
+                else if (inner[pos] == ',' && nestLevel == 0) { break; }
             }
-            
             ++pos;
         }
         
@@ -315,9 +292,6 @@ std::vector<std::any> WSM::JsonMin::parseArray(const std::string& value) {
                 std::any parsedValue = parseValue(element);
                 if (parsedValue.has_value()) {
                     arr.push_back(parsedValue);
-                } else if (element == "null") {
-                    // Only push null if the element is explicitly "null"
-                    arr.push_back(std::any());
                 } else {
                     // If the value couldn't be parsed and isn't explicitly null,
                     // treat it as a string
@@ -339,25 +313,20 @@ std::any WSM::JsonMin::parseValue(const std::string& value) {
     trimmed.erase(0, trimmed.find_first_not_of(" \t\n\r\f\v"));
     trimmed.erase(trimmed.find_last_not_of(" \t\n\r\f\v") + 1);
     
-    // Check for null
-    if (trimmed == "null") {
-        return std::any();
-    }
-    
+    // Check for string (with or without quotes)
+    if (trimmed[0] == '"' && trimmed[trimmed.length() - 1] == '"') {
+		trimmed = trimmed.substr(1, trimmed.length() - 2);
+	}
+
     // Check for boolean (case insensitive)
     std::string lowerTrimmed = trimmed;
     std::transform(lowerTrimmed.begin(), lowerTrimmed.end(), lowerTrimmed.begin(), ::tolower);
+    // Check for null
+	if (lowerTrimmed == "null" || lowerTrimmed == "nullptr") { return std::any(); }
     
-    if (lowerTrimmed == "true" || lowerTrimmed == "false" || 
-        lowerTrimmed == "\"true\"" || lowerTrimmed == "\"false\"") {
-        return lowerTrimmed == "true" || lowerTrimmed == "\"true\"";
-    }
-    
-    // Check for string (with or without quotes)
-    if (trimmed[0] == '"' && trimmed[trimmed.length() - 1] == '"') {
-        return trimmed.substr(1, trimmed.length() - 2);
-    }
-    
+    if (lowerTrimmed == "true" || lowerTrimmed == "false") { return lowerTrimmed == "true"; }
+   
+  
     // Check for array
     if (trimmed[0] == '[' && trimmed[trimmed.length() - 1] == ']') {
         return parseArray(trimmed);
@@ -369,43 +338,43 @@ std::any WSM::JsonMin::parseValue(const std::string& value) {
         return obj.getData();
     }
     
-    // Check for float (with f/F suffix)
-    if (trimmed.back() == 'f' || trimmed.back() == 'F') {
-        std::string numStr = trimmed.substr(0, trimmed.length() - 1);
-        // Check for scientific notation
-        if (numStr.find('e') != std::string::npos || numStr.find('E') != std::string::npos) {
-            return std::stof(numStr);
-        }
-        // Count decimal places for non-scientific notation
-        size_t decimalPos = numStr.find('.');
-        if (decimalPos != std::string::npos) {
-            size_t decimalPlaces = numStr.length() - decimalPos - 1;
-            if (decimalPlaces <= 6) { // Standard float precision
-                return std::stof(numStr);
-            }
-        }
-        // If more than 6 decimal places or no decimal point, treat as float
-        return std::stof(numStr);
-    }
-    
     // Check for number
     std::regex intPattern(R"(-?\d+)");
-    std::regex doublePattern(R"(-?\d+\.\d+)");
-    std::regex scientificPattern1(R"(-?\d+[eE][+-]?\d+)");
-    std::regex scientificPattern2(R"(-?\d+\.\d+[eE][+-]?\d+)");
+
+	if (std::regex_match(trimmed, intPattern)) {
+		try {
+			long long value = std::stoll(trimmed);
+			if (value <= std::numeric_limits<int>::max() && value >= std::numeric_limits<int>::min()) {
+				return static_cast<int>(value);
+			}
+		} catch (const std::out_of_range&) {
+			// If conversion fails due to overflow, treat as string
+		}
+	}
+
+    std::regex floatPattern(R"(-?\d+\.\d+)");
+    std::regex floatScientific1(R"(-?\d+[eE][+-]?\d+)");
+    std::regex floatScientific2(R"(-?\d+\.\d+[eE][+-]?\d+)");
     
-    if (std::regex_match(trimmed, scientificPattern1) || 
-        std::regex_match(trimmed, scientificPattern2)) {
+    // Check for float (with f/F suffix)
+    if (trimmed.back() == 'f' || trimmed.back() == 'F') {
+        //std::string numStr = trimmed;
+        std::string numStr = trimmed.substr(0, trimmed.length() - 1);
+        // Check for scientific notation
+		if (std::regex_match(numStr, floatScientific1) || std::regex_match(numStr, floatScientific2)) { return std::stof(numStr); }
+		else if (std::regex_match(numStr, floatPattern)) { return std::stof(numStr); }
+    } 
+
+  	std::regex doublePattern(R"(-?\d+\.\d+)");
+    std::regex doubleScientific1(R"(-?\d+[eE][+-]?\d+)");
+    std::regex doubleScientific2(R"(-?\d+\.\d+[eE][+-]?\d+)");
+
+	if (std::regex_match(trimmed, doubleScientific1) || std::regex_match(trimmed, doubleScientific2)) { 
         return std::stod(trimmed);
-    }
-    else if (std::regex_match(trimmed, doublePattern)) {
+    } else if (std::regex_match(trimmed, doublePattern)) {
         return std::stod(trimmed);
-    }
-    else if (std::regex_match(trimmed, intPattern)) {
-        return std::stoi(trimmed);
-    }
-    
-    // If none of the above, treat as string
+    } 
+	// If none of the above, treat as string
     return trimmed;
 }
 
@@ -519,6 +488,7 @@ void WSM::JsonMin::traverseHelper(const std::map<std::string, std::any>& obj,
             JsonType type;
             if (pair.second.type() == typeid(bool)) type = JsonType::BOOL;
             else if (pair.second.type() == typeid(int)) type = JsonType::INT;
+            else if (pair.second.type() == typeid(float)) type = JsonType::FLOAT;
             else if (pair.second.type() == typeid(double)) type = JsonType::DOUBLE;
             else if (pair.second.type() == typeid(std::string)) type = JsonType::STRING;
             else if (pair.second.type() == typeid(std::vector<std::any>)) type = JsonType::ARRAY;
@@ -540,6 +510,7 @@ WSM::JsonType WSM::JsonMin::getType(const std::string& key) const {
     
     if (value.type() == typeid(bool)) return JsonType::BOOL;
     if (value.type() == typeid(int)) return JsonType::INT;
+    if (value.type() == typeid(float)) return JsonType::FLOAT;
     if (value.type() == typeid(double)) return JsonType::DOUBLE;
     if (value.type() == typeid(std::string)) return JsonType::STRING;
     if (value.type() == typeid(std::vector<std::any>)) return JsonType::ARRAY;

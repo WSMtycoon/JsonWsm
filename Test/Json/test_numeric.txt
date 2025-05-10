@@ -14,19 +14,19 @@
 		"large": 1.23e+4,
 		"precise": 0.000000001
 	},
-		"valid_floats": {
+	"valid_floats": {
 		"simple": 3.14f,
 		"simple_string": "3.14f",
 		"zero": 0.0f,
 		"negative": -1.5f,
 		"max_precision": 1.234567f,
-		"scientific": 1.23e-4f
+		"scientific": 1.23399e-4f
 	},
 	"invalid_floats": {
 		"many_decimals": 1.23456789f,
 		"no_suffix": 3.14,
 		"invalid_format": 3.14.5f
 	},
-	"mixed": [ 42, 3.14, -1, 0.0, 0.0072f, 123.0F, 1e10, -1e-10 ]
+	"mixed": [ 42, 3.14, -1, 0.0, 0.0072f, 123.0F, 1e10, -1e-10f ]
 
 } 

@@ -6,23 +6,20 @@
 #include <algorithm>
 
 void printValue(const std::any& value) {
-    if (value.type() == typeid(bool)) {
-        std::cout << std::any_cast<bool>(value);
-    } else if (value.type() == typeid(int)) {
-        std::cout << std::any_cast<int>(value);
-    } else if (value.type() == typeid(double)) {
-        std::cout << std::any_cast<double>(value);
-    } else if (value.type() == typeid(std::string)) {
-        std::cout << "\"" << std::any_cast<std::string>(value) << "\"";
-    } else if (value.type() == typeid(std::vector<std::any>)) {
+    if (value.type() == typeid(bool)) { std::cout << std::any_cast<bool>(value); }
+	else if (value.type() == typeid(int)) { std::cout << std::any_cast<int>(value); }
+	else if (value.type() == typeid(float)) { std::cout << std::any_cast<float>(value) << "f"; }
+	else if (value.type() == typeid(double)) { std::cout << std::any_cast<double>(value); }
+	else if (value.type() == typeid(std::string)) { std::cout << "\"" << std::any_cast<std::string>(value) << "\""; }
+	else if (value.type() == typeid(std::vector<std::any>)) {
         const auto& arr = std::any_cast<const std::vector<std::any>&>(value);
         std::cout << "[";
         for (size_t i = 0; i < arr.size(); ++i) {
             if (i > 0) std::cout << ", ";
             printValue(arr[i]);
         }
-        std::cout << "]";
-    } else if (value.type() == typeid(std::map<std::string, std::any>)) {
+        std::cout << "]"; }
+	else if (value.type() == typeid(std::map<std::string, std::any>)) {
         const auto& obj = std::any_cast<const std::map<std::string, std::any>&>(value);
         std::cout << "{";
         bool first = true;
@@ -32,10 +29,8 @@ void printValue(const std::any& value) {
             printValue(val);
             first = false;
         }
-        std::cout << "}";
-    } else {
-        std::cout << "null";
-    }
+        std::cout << "}";}
+	else { std::cout << "null"; }
 }
 
 int main(int argc, char* argv[]) {
