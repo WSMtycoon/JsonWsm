@@ -11,6 +11,7 @@ A lightweight JSON parser that supports UTF-8 encoding and provides easy access 
 - Support for multiple data types:
   - Boolean
   - Integer
+  - Float
   - Double
   - String
   - Arrays
@@ -32,9 +33,8 @@ std::any age = json["age"];
 
 The project uses Make for building. To build and run the tests:
 
-# Build the project
-make clean
-make all
+# Build test the project
+".\\build.ps1"
 
 ## Requirements
 

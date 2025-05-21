@@ -25,8 +25,9 @@ This guide explains how to run and use the test suite for the JsonWSM JSON parse
 ./test.ps1           # Run all tests
 ./test.ps1 struct    # Run structure test
 ./test.ps1 types     # Run data types test
-./test.ps1 nested    # Run nested objects test
+./test.ps1 base    # Run nested objects test
 ./test.ps1 invalid   # Run invalid JSON test
+./test.ps1 C:/TestPath/test.txt   # Run running test file
 ```
 
 ## Test Files
@@ -40,14 +41,14 @@ The test suite includes several JSON files in the `Test` directory:
 ### Data Type Tests
 - `test_types.txt` - Tests all supported data types
 - `test_float.txt` - Tests float type with precision limits
+- `test_numeric.txt` - Tests numeric type with precision limits
 
 ### Nested Structure Tests
-- `test_nested.txt` - Tests nested objects and arrays
-- `test_complex.txt` - Tests complex nested structures
+- `test_struct.txt` - Tests nested objects and arrays
+- `test_base.txt` - Tests complex nested structures
 
 ### Special Cases
-- `test_unicode.txt` - Tests UTF-8 character handling
-- `test_escape.txt` - Tests escape sequences
+- `test_simbol.txt` - Tests UTF-8 character handling
 
 ## Test Output
 
