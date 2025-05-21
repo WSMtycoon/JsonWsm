@@ -1,11 +1,10 @@
 # Build the project
 Write-Host "Building project..."
-make clean
+# make clean
 make all
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host "Build successful."
-
 } else {
     Write-Host "Build failed."
     exit 1
