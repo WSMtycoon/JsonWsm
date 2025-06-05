@@ -16,15 +16,16 @@ HEADER_ONLY_FILES = \
     $(SRC_DIR)/JsonType.h \
     $(SRC_DIR)/JsonBlock.h \
     $(SRC_DIR)/JsonValue.h \
+    $(SRC_DIR)/JsonArray.h \
     $(SRC_DIR)/JsonObject.h \
-    $(SRC_DIR)/JsonArray.h
+    $(SRC_DIR)/JsonParser.h 
 
 # Source files
 PARSER_SRCS = \
     $(SRC_DIR)/JsonValue.cpp \
     $(SRC_DIR)/JsonArray.cpp \
     $(SRC_DIR)/JsonObject.cpp \
-    $(SRC_DIR)/JsonWsm.cpp
+    $(SRC_DIR)/JsonParser.cpp
 
 UTILS_SRCS = $(wildcard $(UTILS_DIR)/*.cpp)
 

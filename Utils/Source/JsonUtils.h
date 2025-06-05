@@ -13,13 +13,13 @@
 #ifndef WSM_JSON_PARSER_UTILS_H
 #define WSM_JSON_PARSER_UTILS_H
 
-#include "../JsonWsm.h"
 
 #include <sstream>
 #include <iomanip>
 #include <regex>
 #include <iostream>
 
+#include "../../Source/JsonParser.h"
 
 namespace WSM {
 

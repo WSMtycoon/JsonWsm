@@ -10,12 +10,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License. **/
 	
-	#include "JsonWsm.h"
 	#include <regex>
 	#include <sstream>
 	#include <iostream>
 	#include <limits>
 	#include <algorithm>
+	
+	#include "JsonParser.h"
 
 namespace WSM {
 
