@@ -12,64 +12,104 @@
 
 #include "JsonValue.h"
 
+#include "JsonObject.h"
+#include "JsonArray.h"
 
 namespace WSM {
 
-	class JsonArray;
-	class JsonObject;
-
 	bool JsonValue::empty() const { return false; }
 
-	size_t JsonValue::size() const
-	{
-		if(isBlock() && data.block != nullptr){ return data.block.get()->size();}
+	size_t JsonValue::size() const{
+		if(isBlock() && block.get() != nullptr){ return block.get()->size();}
 		else { return -1; }
 	}
 
-	std::optional<const VariantType&> JsonValue::getVariant() const{
-		if (isVariant()) { return data.primitive; }
-		return std::nullopt;
+	JsonValue& JsonValue::operator[](size_t index){ return get(index);}
+	JsonValue& JsonValue::operator[](const std::string &field){ return get(field); }
+
+	JsonValue &JsonValue::get(std::string field){
+		if(isBlock()){
+			if(isArray()){get(std::stoul(field));}
+			if(isObject() && block.get()->hasField(field)){return block.get()->operator[](field); }
+		}
+		throw std::invalid_argument("Element not found.");
+	}
+	JsonValue &JsonValue::get(size_t index){
+		if(isBlock()){
+			if(isObject()){get(std::to_string(index));}
+			if(isArray() && block.get()->hasField(index)){return block.get()->operator[](index);}
+		}
+		throw std::invalid_argument("Element not found.");
 	}
 
-	std::optional<bool> JsonValue::getBool() const {
-		if(type == JsonType::BOOL && std::holds_alternative<bool>(data.primitive)) {return std::get<bool>(data.primitive);}
-		return std::nullopt;
+	std::optional<bool> JsonValue::getBool() const{
+		if(type == JsonType::BOOL){
+			if ( auto val = std::get_if<bool>(&data) ) { return std::optional<bool>(*val); }
+		}
+	    return std::nullopt;
 	}
 	std::optional<int> JsonValue::getInt() const{
-		if(type == JsonType::INT && std::holds_alternative<int>(data.primitive)){ return std::get<int>(data.primitive); }
+		if(type == JsonType::INT){
+			if ( auto val = std::get_if<int>(&data) ) { return std::optional<int>(*val); }
+		}
 		return std::nullopt;
 	}
 
 	std::optional<float> JsonValue::getFloat() const{
-		if(type == JsonType::FLOAT && std::holds_alternative<float>(data.primitive)){return std::get<float>(data.primitive);}
+		if(type == JsonType::FLOAT){
+			if ( auto val = std::get_if<float>(&data) ) { return std::optional<float>(*val); }
+		}
 		return std::nullopt;
 	}
 
 	std::optional<double> JsonValue::getDouble() const{
-		if(type == JsonType::DOUBLE && std::holds_alternative<double>(data.primitive)){return std::get<double>(data.primitive);}
+		if(type == JsonType::DOUBLE){
+			if ( auto val = std::get_if<double>(&data) ) { return std::optional<double>(*val); }
+		}
 		return std::nullopt;
 	}
 
 	std::optional<std::string> JsonValue::getString() const{
-		if(type == JsonType::STRING && std::holds_alternative<std::string>(data.primitive)){return std::get<std::string>(data.primitive);}
+		if(type == JsonType::STRING){
+			if ( auto val = std::get_if<std::string>(&data) ) { return std::optional<std::string>(*val); }
+		}
 		return std::nullopt;
 	}
 
+	std::shared_ptr<JsonArray> JsonValue::getArray() const {
+		if (type == JsonType::ARRAY && block) {
+			return std::dynamic_pointer_cast<JsonArray>(block);
+		}
+		return nullptr;
+	}
+
+	std::shared_ptr<JsonObject> JsonValue::getObject() const {
+		if (type == JsonType::OBJECT && block) {
+			return std::dynamic_pointer_cast<JsonObject>(block);
+		}
+		return nullptr;
+	}
 
 	std::string JsonValue::getValueString() const {
 		switch (type) {
-			case JsonType::BOOL: return std::get<bool>(data.primitive) ? "true" : "false";
-			case JsonType::INT: return std::to_string(std::get<int>(data.primitive));
+			case JsonType::BOOL: return std::get<bool>(data) ? "true" : "false";
+			case JsonType::INT: return std::to_string(std::get<int>(data));
 			case JsonType::DOUBLE: {  
 				std::stringstream ss; 
-				ss << std::fixed << std::setprecision(12) << std::get<double>(data.primitive);
+				ss << std::fixed << std::setprecision(12) << std::get<double>(data);
 				return ss.str();
 			}
-			case JsonType::STRING: return "\"" + std::get<std::string>(data.primitive) + "\"";
+			case JsonType::STRING: return "\"" + std::get<std::string>(data) + "\"";
 			case JsonType::NULL_TYPE: return "null";
 			default: return "";
 		}
 	}
+
+	void JsonValue::set(const JsonArray &array)	{ type = JsonType::ARRAY; block = std::make_shared<JsonArray>(array); }
+	void JsonValue::set(const JsonObject &object){ type = JsonType::OBJECT; block = std::make_shared<JsonObject>(object); }
+
+	JsonValue::JsonValue(const JsonArray &array): type(JsonType::ARRAY) { block = std::make_shared<JsonArray>(array); }
+	JsonValue::JsonValue(const JsonObject &object) : type(JsonType::OBJECT) { block = std::make_shared<JsonObject>(object); }
 
 } // namespace WSM
 	

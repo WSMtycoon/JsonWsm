@@ -17,10 +17,13 @@
 #include <memory>
 #include <vector>
 #include <map>
+#include <optional>
 
-#include "JsonValue.h"
+#include "JsonType.h"
 
 namespace WSM {
+
+	class JsonValue;
 
 	class JsonBlock {
 		public:
@@ -29,11 +32,11 @@ namespace WSM {
 			virtual size_t size() const = 0;
 
 			// Extracting an element
-			virtual std::optional<JsonValue &> operator[](size_t index) = 0;
-			virtual std::optional<JsonValue &> operator[](const std::string& field) = 0;
+			virtual JsonValue& operator[](size_t index) = 0;
+			virtual JsonValue& operator[](const std::string& field) = 0;
 
-			// Block Typt
-			virtual JsonType getType() const { return JsonType::NULL_TYPE; }
+			// Block Type
+			virtual JsonType getType() const = 0;
 		
 			// Element manipulation
 			virtual void push_back(const JsonValue& element, std::string field = "") = 0;
@@ -48,10 +51,11 @@ namespace WSM {
 			
 			// Return Json 
 			virtual std::string getValueString() const = 0;
-
+			
 			//Constructor
-			virtual ~JsonBlock() = default;
-		private:
+			JsonBlock(){};
+			virtual ~JsonBlock() {};
+		protected:
 	};
 
 } // namespace WSM

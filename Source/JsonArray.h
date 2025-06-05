@@ -17,6 +17,7 @@
 #include <sstream>
 #include <optional>
 
+#include "JsonBlock.h"
 #include "JsonValue.h"
 
 namespace WSM {
@@ -29,22 +30,21 @@ namespace WSM {
 			size_t size() const override { return data.size(); } ///
 
 			// Extracting an element
-			std::optional<JsonValue &> operator[](size_t index) override { return get(index); }
-			std::optional<JsonValue &> operator[](const std::string& field) override 
-				{ return get(std::stoul(field)); }
+			JsonValue& operator[](size_t index) override; 
+			JsonValue& operator[](const std::string& field) override;
 			
 			// Block Type
 			JsonType getType() const override { return JsonType::ARRAY; }
 
 			// Element manipulation
-			void push_back(const JsonValue& element, std::string field = "") override { data.push_back(element); }
+			void push_back(const JsonValue& element, std::string field = "") override { data.push_back(std::make_shared<JsonValue>(element));}
 			void erase(const std::string& field) override { erase(std::stoi(field)); }
 			void erase(const size_t index) override { if (index < data.size()) { data.erase(data.begin() + index); }}
 			void clear() override { data.clear(); }
 
 			// Key operations
 			bool hasField(const std::string& field) const override { return hasField(std::stoul(field)); };
-			bool hasField(const size_t index) const override {(index > -1  && index < data.size ()) ? true : false;};
+			bool hasField(const size_t index) const override {return (index > -1  && index < data.size ()) ? true : false;};
 			std::vector<std::string> getFields() const override;
 
 			// Return Json
@@ -52,11 +52,12 @@ namespace WSM {
 			
 			// Constructors
 			JsonArray() = default;
-
+			JsonArray(std::vector<JsonValue>);
 		protected:
-			std::optional<JsonValue &> get(size_t index);
-			std::vector<JsonValue> data;
-	}; // namespace WSM
-}
+			JsonValue& get(size_t index);
+			std::vector<std::shared_ptr<JsonValue>> data;
+	};
+
+} // namespace WSM
 
 #endif // WSM_JSON_PARSER_ARRAY_H

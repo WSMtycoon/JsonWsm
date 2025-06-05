@@ -20,8 +20,6 @@ class JsonValue;
 #include "JsonBlock.h"
 #include "JsonValue.h"
 
-class JsonValue;
-
 namespace WSM {
 	class JsonObject: public JsonBlock{
 		public:
@@ -31,14 +29,14 @@ namespace WSM {
 			size_t size() const override { return data.size(); }
 
 			// Extracting an element
-			std::optional<JsonValue &> operator[](size_t index) override;
-			std::optional<JsonValue &> operator[](const std::string& field) override;
+			JsonValue& operator[](size_t index) override;
+			JsonValue& operator[](const std::string& field) override;
 
 			// Block Typt
 			JsonType getType() const override{ return JsonType::OBJECT; }
 		
 			// Element manipulation
-			void push_back(std::string field, const JsonValue& element);
+			void push_back( const JsonValue& element, std::string field ) override;
 			void erase(const size_t index) override {erase(std::to_string(index));};
 			void erase(const std::string& field) override;
 			void clear() override { data.clear(); }
@@ -55,8 +53,8 @@ namespace WSM {
 			JsonObject() = default;
 
 		protected:
-			std::optional<JsonValue &> get(std::string index);
-			std::map<std::string, JsonValue> data;
+			JsonValue& get(std::string field);
+			std::map<std::string, std::shared_ptr<JsonValue>> data;
 	};
 } // namespace WSM
 

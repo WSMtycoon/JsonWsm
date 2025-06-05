@@ -10,24 +10,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License. **/
 
-#include "JsonObject.h"
 #include <sstream>
 #include <iomanip>
 
+#include "JsonObject.h"
+
 namespace WSM {
 
-	std::optional<JsonValue &> JsonObject::operator[](size_t index){ return get(std::to_string(index)); }
-	std::optional<JsonValue &> JsonObject::operator[](const std::string& field) { return get(field); }
-	std::optional<JsonValue &> JsonObject::get(std::string field){
-		if(!data.empty() && data.find(field) != data.end()){ return data[field]; }
-		return std::nullopt;
+	JsonValue& JsonObject::operator[](size_t index){ return get( std::to_string(index)); }
+	JsonValue& JsonObject::operator[](const std::string& field) { return get(field); }
+	JsonValue &JsonObject::get(std::string field){
+		auto it = data.find(field);
+		if (it == data.end()) { throw std::invalid_argument("Field not found: " + field); }
+		return *(it->second);
 	}
 
-	void JsonObject::push_back(std::string field, const JsonValue & element){ 
-		data.emplace(field, element); 
+	void JsonObject::push_back(const JsonValue &element, std::string field){
+		data.emplace(field, std::make_shared<JsonValue>(element)); 
 	}
 
-	void JsonObject::erase(const std::string& field) { 
+	void JsonObject::erase(const std::string &field){
 		if(!data.empty() && data.find(field) != data.end()){ data.erase(field); }
 	}
 
@@ -44,7 +46,7 @@ namespace WSM {
 		bool first = true;
 		for (const auto& pair : data) {
 			if (!first) ss << ", ";
-			ss << "\"" << pair.first << "\": " << pair.second.getValueString();
+			ss << "\"" << pair.first << "\": " << pair.second->getValueString();
 			first = false;
 		}
 		ss << "}";

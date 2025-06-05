@@ -20,12 +20,13 @@
 #include <optional>
 #include <memory>
 
-#include "JsonArray.h"
-#include "JsonObject.h"
+#include "JsonBlock.h"
 
 namespace WSM {
 
-	enum class JsonType {BOOL, INT, FLOAT, DOUBLE, STRING, ARRAY, OBJECT, EMPTY, NULL_TYPE};
+	class JsonArray;
+	class JsonObject;
+
 	using VariantType = std::variant<bool, int, float, double, std::string>;
 
 	struct JsonData {
@@ -38,6 +39,9 @@ namespace WSM {
 
 			bool empty() const;
 			size_t size() const;
+
+			JsonValue& operator[](size_t index);
+			JsonValue& operator[](const std::string& field);
 
 			// IsTypes
 			bool isBool() const {return type == JsonType::BOOL;};
@@ -56,39 +60,50 @@ namespace WSM {
 			// Getters
 			JsonType getType() const {return type;};
 
-			std::optional<bool> JsonValue::getBool() const;
-			std::optional<int> JsonValue::getInt() const; 
-			std::optional<float> JsonValue::getFloat() const;
-			std::optional<double> JsonValue::getDouble() const;
-			std::optional<std::string> JsonValue::getString() const;
-			std::optional<const VariantType&> getVariant() const;
-			std::shared_ptr<JsonBlock> getBlock() const { return data.block; }
+			std::optional<bool> getBool() const;
+			std::optional<int> getInt() const;
+			std::optional<float> getFloat() const;
+			std::optional<double> getDouble() const;
+			std::optional<std::string> getString() const;
+			std::shared_ptr<JsonBlock> getBlock() const { return block; }
+			std::shared_ptr<JsonArray> getArray() const;
+			std::shared_ptr<JsonObject> getObject() const;
 
 			std::string getValueString() const;
 			
 			// Setters
-			void set(bool value) { type = JsonType::BOOL; data.primitive = value; }
-			void set(int value) { type = JsonType::INT; data.primitive = value; }
-			void set(float value) { type = JsonType::FLOAT; data.primitive = value; }
-			void set(double value) { type = JsonType::DOUBLE; data.primitive = value; }
-			void set(const std::string& value) { type = JsonType::STRING; data.primitive = value; }
-			void set(const JsonArray& block) { type = block.getType(); data.block = std::make_shared<JsonArray>(block); }
-			void set(const JsonObject& block) { type = block.getType(); data.block = std::make_shared<JsonObject>(block); }
+			void set() { type = JsonType::EMPTY; }
+			void set(bool value) { type = JsonType::BOOL; data = value; }
+			void set(int value) { type = JsonType::INT; data = value; }
+			void set(float value) { type = JsonType::FLOAT; data = value; }
+			void set(double value) { type = JsonType::DOUBLE; data = value; }
+			void set(const std::string& value) { type = JsonType::STRING; data = value; }
+			void set(const JsonArray& array);
+			void set(const JsonObject& object);
 			void setNull() { type = JsonType::NULL_TYPE; }
 
 			// Constructors
 			JsonValue() : type(JsonType::NULL_TYPE) {}
-			JsonValue(bool value) : type(JsonType::BOOL) { data.primitive = value; }
-			JsonValue(int value) : type(JsonType::INT) { data.primitive = value; }
-			JsonValue(float value) : type(JsonType::FLOAT) { data.primitive = value; }
-			JsonValue(double value) : type(JsonType::DOUBLE) { data.primitive = value; }
-			JsonValue(const std::string& value) : type(JsonType::STRING) { data.primitive = value; }
-			JsonValue(const JsonBlock& value) : type(value.getType()) { data.block = std::make_shared<JsonBlock>(value); }
+			JsonValue(JsonType set) : type(set) {}
+			JsonValue(bool value) : type(JsonType::BOOL) { data = value; }
+			JsonValue(int value) : type(JsonType::INT) { data = value; }
+			JsonValue(float value) : type(JsonType::FLOAT) { data = value; }
+			JsonValue(double value) : type(JsonType::DOUBLE) { data = value; }
+			JsonValue(const std::string& value) : type(JsonType::STRING) { data = value; }
+			JsonValue(const JsonArray& array);
+			JsonValue(const JsonObject& object);
 
 		protected:
+			
 			JsonType type = JsonType::NULL_TYPE;
+		
 		private:
-			JsonData data;
+			
+			JsonValue& get(std::string field);
+			JsonValue& get(size_t index);
+
+			VariantType data;
+			std::shared_ptr<JsonBlock> block;
 	};
 }
 
