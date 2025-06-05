@@ -8,89 +8,92 @@ SRC_DIR = Source
 TEST_DIR = Test/Source
 UTILS_DIR = Utils/Source
 BIN_DIR = bin
+LIB_DIR = lib
 OBJ_DIR = Object
 
-# Header files (interface-only)
-HEADER_FILES = \
+# Header-only files
+HEADER_ONLY_FILES = \
     $(SRC_DIR)/JsonType.h \
-    $(SRC_DIR)/JsonBlock.h
+    $(SRC_DIR)/JsonBlock.h \
+    $(SRC_DIR)/JsonValue.h \
+    $(SRC_DIR)/JsonObject.h \
+    $(SRC_DIR)/JsonArray.h
 
-# Source files in correct compilation order
+# Source files
 PARSER_SRCS = \
     $(SRC_DIR)/JsonValue.cpp \
     $(SRC_DIR)/JsonArray.cpp \
     $(SRC_DIR)/JsonObject.cpp \
     $(SRC_DIR)/JsonWsm.cpp
 
-TEST_SRCS = $(wildcard $(TEST_DIR)/*.cpp)
 UTILS_SRCS = $(wildcard $(UTILS_DIR)/*.cpp)
+
+# Test files
+TEST_PARSER_SRC = $(TEST_DIR)/test_parser.cpp
+TEST_STRUCT_SRC = $(TEST_DIR)/test_struct.cpp
 
 # Object files
 PARSER_OBJS = $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(PARSER_SRCS))
-TEST_OBJS = $(patsubst $(TEST_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(TEST_SRCS))
 UTILS_OBJS = $(patsubst $(UTILS_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(UTILS_SRCS))
+TEST_PARSER_OBJ = $(OBJ_DIR)/test_parser.o
+TEST_STRUCT_OBJ = $(OBJ_DIR)/test_struct.o
 
-# Executables
-PARSER_LIB = $(BIN_DIR)/libjsonparser.a
-TEST_EXE = $(BIN_DIR)/test_parser.exe
-UTILS_EXE = $(BIN_DIR)/utils.exe
+# Libraries and executables
+PARSER_LIB = $(LIB_DIR)/libjsonparser.a
+UTILS_LIB = $(LIB_DIR)/libjsonutils.a
+PARSER_EXE = $(BIN_DIR)/parser.exe
+STRUCT_EXE = $(BIN_DIR)/struct.exe
+
+# Create necessary directories
+$(shell mkdir -p $(BIN_DIR) $(LIB_DIR) $(OBJ_DIR))
 
 # Default target
-all: clean_bin parser utils test
+all: parser utils test
 
-# Create directories if they don't exist
-$(OBJ_DIR) $(BIN_DIR):
-	mkdir -p $@
+# Build parser object files
+parser: $(PARSER_OBJS)
 
-# Clean only bin directory
-clean_bin:
-	rm -rf $(BIN_DIR)
-	mkdir -p $(BIN_DIR)
-
-# Clean everything
-clean:
-	rm -rf $(BIN_DIR) $(OBJ_DIR)
-
-# Build parser library
-parser: $(PARSER_LIB)
-
-# Build utils
-utils: $(UTILS_EXE)
+# Build utils object files
+utils: $(UTILS_OBJS)
 
 # Build tests
-test: $(TEST_EXE)
+tests: $(PARSER_EXE) $(STRUCT_EXE)
 
-# Compile parser source files with dependencies
-$(OBJ_DIR)/JsonValue.o: $(SRC_DIR)/JsonValue.cpp $(SRC_DIR)/JsonValue.h $(HEADER_FILES) | $(OBJ_DIR)
+# Build library
+libs: $(PARSER_LIB) $(UTILS_LIB)
+
+# Clean all temporary build files
+clean:
+	rm -rf $(BIN_DIR) $(LIB_DIR) $(OBJ_DIR)
+
+# Compile parser source files
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(HEADER_ONLY_FILES)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-$(OBJ_DIR)/JsonArray.o: $(SRC_DIR)/JsonArray.cpp $(SRC_DIR)/JsonArray.h $(SRC_DIR)/JsonBlock.h $(SRC_DIR)/JsonValue.h $(SRC_DIR)/JsonType.h | $(OBJ_DIR)
-	$(CXX) $(CXXFLAGS) -c $< -o $@
-
-$(OBJ_DIR)/JsonObject.o: $(SRC_DIR)/JsonObject.cpp $(SRC_DIR)/JsonObject.h $(SRC_DIR)/JsonBlock.h $(SRC_DIR)/JsonValue.h $(SRC_DIR)/JsonType.h | $(OBJ_DIR)
-	$(CXX) $(CXXFLAGS) -c $< -o $@
-
-$(OBJ_DIR)/JsonWsm.o: $(SRC_DIR)/JsonWsm.cpp $(SRC_DIR)/JsonWsm.h $(SRC_DIR)/JsonObject.h $(SRC_DIR)/JsonValue.h $(SRC_DIR)/JsonType.h | $(OBJ_DIR)
+# Compile utils source files
+$(OBJ_DIR)/%.o: $(UTILS_DIR)/%.cpp $(HEADER_ONLY_FILES)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 # Compile test files
-$(OBJ_DIR)/%.o: $(TEST_DIR)/%.cpp | $(OBJ_DIR)
+$(TEST_PARSER_OBJ): $(TEST_PARSER_SRC) $(HEADER_ONLY_FILES)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-# Compile utils files
-$(OBJ_DIR)/%.o: $(UTILS_DIR)/%.cpp | $(OBJ_DIR)
+$(TEST_STRUCT_OBJ): $(TEST_STRUCT_SRC) $(HEADER_ONLY_FILES)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 # Create parser library
-$(PARSER_LIB): $(PARSER_OBJS) | $(BIN_DIR)
+$(PARSER_LIB): $(PARSER_OBJS)
 	ar rcs $@ $^
 
-# Link utils executable
-$(UTILS_EXE): $(UTILS_OBJS) $(PARSER_LIB) | $(BIN_DIR)
+# Create utils library
+$(UTILS_LIB): $(UTILS_OBJS)
+	ar rcs $@ $^
+
+# Link test executables
+$(PARSER_EXE): $(TEST_PARSER_OBJ) $(PARSER_LIB) $(UTILS_LIB)
 	$(CXX) $(LDFLAGS) $^ -o $@
 
-# Link test executable
-$(TEST_EXE): $(TEST_OBJS) $(PARSER_LIB) | $(BIN_DIR)
+$(STRUCT_EXE): $(TEST_STRUCT_OBJ) $(PARSER_LIB) $(UTILS_LIB)
 	$(CXX) $(LDFLAGS) $^ -o $@
 
-.PHONY: all clean clean_bin parser utils test 
+.PHONY: all clean parser utils test lib 

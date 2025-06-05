@@ -9,6 +9,7 @@ bin/json_test.exe
 *.swo
 
 # Compiled files
+*.a
 *.o
 *.obj
 *.exe
