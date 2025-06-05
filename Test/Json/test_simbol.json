@@ -32,7 +32,7 @@
 	"edgeCases": {
 		"specialCharacters": {
 		"tabs": "\t\t\t",
-		"newlines": "\n\n\n"
+		"newlines": "\n\n\n",
 		"newtablines": "\t\n\t",
 		"quotes": "\"\"\"",
 		"slashes": "\\\\",
