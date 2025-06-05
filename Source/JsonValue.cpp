@@ -26,6 +26,8 @@ namespace WSM {
 
 	JsonValue& JsonValue::operator[](size_t index){ return get(index);}
 	JsonValue& JsonValue::operator[](const std::string &field){ return get(field); }
+	const JsonValue& JsonValue::operator[](size_t index) const { return get(index); }
+	const JsonValue& JsonValue::operator[](const std::string &field) const { return get(field); }
 
 	JsonValue &JsonValue::get(std::string field){
 		if(isBlock()){
@@ -34,7 +36,24 @@ namespace WSM {
 		}
 		throw std::invalid_argument("Element not found.");
 	}
+
 	JsonValue &JsonValue::get(size_t index){
+		if(isBlock()){
+			if(isObject()){get(std::to_string(index));}
+			if(isArray() && block.get()->hasField(index)){return block.get()->operator[](index);}
+		}
+		throw std::invalid_argument("Element not found.");
+	}
+
+	const JsonValue &JsonValue::get(std::string field) const {
+		if(isBlock()){
+			if(isArray()){get(std::stoul(field));}
+			if(isObject() && block.get()->hasField(field)){return block.get()->operator[](field); }
+		}
+		throw std::invalid_argument("Element not found.");
+	}
+
+	const JsonValue &JsonValue::get(size_t index) const {
 		if(isBlock()){
 			if(isObject()){get(std::to_string(index));}
 			if(isArray() && block.get()->hasField(index)){return block.get()->operator[](index);}

@@ -31,6 +31,8 @@ namespace WSM {
 			// Extracting an element
 			JsonValue& operator[](size_t index) override;
 			JsonValue& operator[](const std::string& field) override;
+			const JsonValue& operator[](size_t index) const override;
+			const JsonValue& operator[](const std::string& field) const override;
 
 			// Block Typt
 			JsonType getType() const override{ return JsonType::OBJECT; }
@@ -54,6 +56,7 @@ namespace WSM {
 
 		protected:
 			JsonValue& get(std::string field);
+			const JsonValue& get(std::string field) const;
 			std::map<std::string, std::shared_ptr<JsonValue>> data;
 	};
 } // namespace WSM

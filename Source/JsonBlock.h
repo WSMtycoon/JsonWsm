@@ -34,6 +34,8 @@ namespace WSM {
 			// Extracting an element
 			virtual JsonValue& operator[](size_t index) = 0;
 			virtual JsonValue& operator[](const std::string& field) = 0;
+			virtual const JsonValue& operator[](size_t index) const = 0;
+			virtual const JsonValue& operator[](const std::string& field) const = 0;
 
 			// Block Type
 			virtual JsonType getType() const = 0;
@@ -54,7 +56,7 @@ namespace WSM {
 			
 			//Constructor
 			JsonBlock(){};
-			virtual ~JsonBlock() {};
+			virtual ~JsonBlock() = default;
 		protected:
 	};
 

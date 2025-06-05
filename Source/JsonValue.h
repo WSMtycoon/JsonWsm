@@ -42,6 +42,8 @@ namespace WSM {
 
 			JsonValue& operator[](size_t index);
 			JsonValue& operator[](const std::string& field);
+			const JsonValue& operator[](size_t index) const;
+			const JsonValue& operator[](const std::string& field) const;
 
 			// IsTypes
 			bool isBool() const {return type == JsonType::BOOL;};

@@ -23,7 +23,17 @@ namespace WSM {
 
 	JsonValue& JsonArray::operator[](size_t index){ return get(index); }
 	JsonValue& JsonArray::operator[](const std::string &field){ return get(std::stoul(field)); }
+	const JsonValue& JsonArray::operator[](size_t index) const { return get(index); }
+	const JsonValue& JsonArray::operator[](const std::string &field) const { return get(std::stoul(field)); }
+
 	JsonValue &JsonArray::get(size_t index){
+		if (index > -1 && index < data.size()) { 
+			return *(data[index].get()); 
+		} 
+		throw std::invalid_argument("Index not found - " + std::to_string(index));
+	}
+
+	const JsonValue &JsonArray::get(size_t index) const {
 		if (index > -1 && index < data.size()) { 
 			return *(data[index].get()); 
 		} 

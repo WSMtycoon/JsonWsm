@@ -19,7 +19,16 @@ namespace WSM {
 
 	JsonValue& JsonObject::operator[](size_t index){ return get( std::to_string(index)); }
 	JsonValue& JsonObject::operator[](const std::string& field) { return get(field); }
+	const JsonValue& JsonObject::operator[](size_t index) const { return get(std::to_string(index)); }
+	const JsonValue& JsonObject::operator[](const std::string& field) const { return get(field); }
+
 	JsonValue &JsonObject::get(std::string field){
+		auto it = data.find(field);
+		if (it == data.end()) { throw std::invalid_argument("Field not found: " + field); }
+		return *(it->second);
+	}
+
+	const JsonValue &JsonObject::get(std::string field) const {
 		auto it = data.find(field);
 		if (it == data.end()) { throw std::invalid_argument("Field not found: " + field); }
 		return *(it->second);
