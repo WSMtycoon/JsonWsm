@@ -72,6 +72,7 @@ namespace WSM {
 			std::shared_ptr<JsonObject> getObject() const;
 
 			std::string getValueString() const;
+			std::vector<std::string> getFields() const;
 			
 			// Setters
 			void set() { type = JsonType::EMPTY; }
@@ -103,6 +104,8 @@ namespace WSM {
 			
 			JsonValue& get(std::string field);
 			JsonValue& get(size_t index);
+			const JsonValue& get(std::string field) const;
+			const JsonValue& get(size_t index) const;
 
 			VariantType data;
 			std::shared_ptr<JsonBlock> block;

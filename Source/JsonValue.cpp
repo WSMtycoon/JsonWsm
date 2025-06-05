@@ -95,6 +95,12 @@ namespace WSM {
 		return std::nullopt;
 	}
 
+	std::vector<std::string> JsonValue::getFields() const {
+		if (isBlock() && block) { return block->getFields(); }
+		return std::vector<std::string>();
+	}
+
+
 	std::shared_ptr<JsonArray> JsonValue::getArray() const {
 		if (type == JsonType::ARRAY && block) {
 			return std::dynamic_pointer_cast<JsonArray>(block);
@@ -113,12 +119,21 @@ namespace WSM {
 		switch (type) {
 			case JsonType::BOOL: return std::get<bool>(data) ? "true" : "false";
 			case JsonType::INT: return std::to_string(std::get<int>(data));
+			case JsonType::FLOAT: return std::to_string(std::get<float>(data));
 			case JsonType::DOUBLE: {  
 				std::stringstream ss; 
 				ss << std::fixed << std::setprecision(12) << std::get<double>(data);
 				return ss.str();
 			}
 			case JsonType::STRING: return "\"" + std::get<std::string>(data) + "\"";
+			case JsonType::ARRAY: {
+
+				return "";
+			} 
+			case JsonType::OBJECT: {
+
+				return ""; 
+			}
 			case JsonType::NULL_TYPE: return "null";
 			default: return "";
 		}
