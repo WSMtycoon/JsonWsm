@@ -46,18 +46,21 @@ namespace WSM {
 			const JsonValue& operator[](const std::string& field) const;
 
 			// IsTypes
-			bool isBool() const {return type == JsonType::BOOL;};
-			bool isNumeric() const {return type == JsonType::INT;};
-			bool isFloat() const {return type == JsonType::FLOAT;};
-			bool isDouble() const {return type == JsonType::DOUBLE;};
-			bool isString() const {return type == JsonType::STRING;}; 
-			bool isArray() const {return type == JsonType::ARRAY;};
-			bool isObject() const {return type == JsonType::OBJECT;};
-			bool isEmpty() const {return type == JsonType::EMPTY;};
-			bool isNull() const {return type == JsonType::NULL_TYPE;};
+			inline bool isBool() const {return type == JsonType::BOOL;};
+			inline bool isInt() const {return type == JsonType::INT;};
+			inline bool isFloat() const {return type == JsonType::FLOAT;};
+			inline bool isDouble() const {return type == JsonType::DOUBLE;};
+			inline bool isDecimal() const {return isFloat() || isDouble();};
+			inline bool isString() const {return type == JsonType::STRING;}; 
+			inline bool isVariant() const{return isBool() || isInt() || isDecimal() || isString();};
 
-			bool isBlock() const{return type == JsonType::OBJECT || type == JsonType::ARRAY; };
-			bool isVariant() const{return type == JsonType::BOOL || type == JsonType::INT || type == JsonType::FLOAT || type == JsonType::DOUBLE || type == JsonType::STRING;};
+			inline bool isArray() const {return (type == JsonType::ARRAY && block != nullptr) ? true : false;};
+			inline bool isObject() const {return (type == JsonType::OBJECT && block != nullptr) ? true : false;};
+
+			inline bool isEmpty() const {return type == JsonType::EMPTY;};
+			inline bool isNull() const {return type == JsonType::NULL_TYPE;};
+
+			bool isBlock() const{return (isObject() || isArray) ? true : false; };
 
 			// Getters
 			JsonType getType() const {return type;};

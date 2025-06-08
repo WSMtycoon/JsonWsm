@@ -11,7 +11,6 @@
  * limitations under the License. **/
 
 #include "JsonValue.h"
-
 #include "JsonObject.h"
 #include "JsonArray.h"
 
@@ -61,55 +60,50 @@ namespace WSM {
 		throw std::invalid_argument("Element not found.");
 	}
 
-	std::optional<bool> JsonValue::getBool() const{
-		if(type == JsonType::BOOL){
+	std::optional<bool> JsonValue::getBool() const {
+		if(isBool()){
 			if ( auto val = std::get_if<bool>(&data) ) { return std::optional<bool>(*val); }
 		}
 	    return std::nullopt;
 	}
 	std::optional<int> JsonValue::getInt() const{
-		if(type == JsonType::INT){
+		if(isInt()){
 			if ( auto val = std::get_if<int>(&data) ) { return std::optional<int>(*val); }
 		}
 		return std::nullopt;
 	}
 
 	std::optional<float> JsonValue::getFloat() const{
-		if(type == JsonType::FLOAT){
+		if(isFloat()){
 			if ( auto val = std::get_if<float>(&data) ) { return std::optional<float>(*val); }
 		}
 		return std::nullopt;
 	}
 
 	std::optional<double> JsonValue::getDouble() const{
-		if(type == JsonType::DOUBLE){
+		if(isDouble()){
 			if ( auto val = std::get_if<double>(&data) ) { return std::optional<double>(*val); }
 		}
 		return std::nullopt;
 	}
-
 	std::optional<std::string> JsonValue::getString() const{
-		if(type == JsonType::STRING){
+		if(isString()){
 			if ( auto val = std::get_if<std::string>(&data) ) { return std::optional<std::string>(*val); }
 		}
 		return std::nullopt;
 	}
-
 	std::vector<std::string> JsonValue::getFields() const {
-		if (isBlock() && block) { return block->getFields(); }
+		if (isBlock()) { return block->getFields(); }
 		return std::vector<std::string>();
 	}
-
-
 	std::shared_ptr<JsonArray> JsonValue::getArray() const {
-		if (type == JsonType::ARRAY && block) {
+		if (isArray()) {
 			return std::dynamic_pointer_cast<JsonArray>(block);
 		}
 		return nullptr;
 	}
-
 	std::shared_ptr<JsonObject> JsonValue::getObject() const {
-		if (type == JsonType::OBJECT && block) {
+		if (isObject()) {
 			return std::dynamic_pointer_cast<JsonObject>(block);
 		}
 		return nullptr;
