@@ -39,10 +39,9 @@ namespace WSM {
 		bool isObject(const std::string& key) const;
 		bool isNull(const std::string& key) const;
 
-		bool isCorrectly() const { return correctlyParsed; }
-
-		// Data access methods
-		std::optional<JsonValue> getValue(const std::string& key) const;
+		bool isCorrectlyParsed() const { return correctlyParsed; }
+		
+		// Value retrieval methods
 		std::optional<bool> getBool(const std::string& key) const;
 		std::optional<int> getInt(const std::string& key) const;
 		std::optional<float> getFloat(const std::string& key) const;
@@ -50,29 +49,25 @@ namespace WSM {
 		std::optional<std::string> getString(const std::string& key) const;
 		std::shared_ptr<JsonArray> getArray(const std::string& key) const;
 		std::shared_ptr<JsonObject> getObject(const std::string& key) const;
-
-		// Utility methods
 		std::vector<std::string> getFields(const std::string& key = "") const;
 
-		// Constructors
-		JsonParser() = default;
-		explicit JsonParser(const std::string& jsonStr);
-		~JsonParser() = default;
+		JsonParser(const std::string& jsonStr);
 
 	private:
-		JsonValue root;
-		bool correctlyParsed = true;
+		bool correctlyParsed = false;
+
+		std::optional<JsonValue> getValue(const std::string& key) const;
 
 		// Helper methods
 		void parseJson(const std::string& jsonStr);
 		JsonValue parseValue(const std::string& value);
-		std::vector<std::string> splitPath(const std::string& path) const;
-		
+
 		// Parsing helpers
 		std::vector<std::pair<std::string, std::string>> splitJsonObject(const std::string& jsonStr);
 		std::string extractJsonValue(const std::string& jsonStr, size_t& pos);
 		std::string extractJsonKey(const std::string& jsonStr, size_t& pos);
 		std::vector<JsonValue> parseArray(const std::string& value);
+
 	};
 
 } // namespace WSM

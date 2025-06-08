@@ -25,27 +25,36 @@ JsonParser::JsonParser(const std::string& jsonStr):JsonObject() {
 }
 
 void JsonParser::parseJson(const std::string& jsonStr) {
-	correctlyParsed = true;
+
+	correctlyParsed = false;
 	
 	// Trim whitespace
 	std::string trimmed = jsonStr;
 	trimmed.erase(0, trimmed.find_first_not_of(" \t\n\r\f\v"));
 	trimmed.erase(trimmed.find_last_not_of(" \t\n\r\f\v") + 1);
 	
-	if (trimmed.empty()) {
-		correctlyParsed = false;
-		return;
-	}
+	if (trimmed.empty()) { correctlyParsed = false; return;}
 
 	// Parse the root value
-	root = parseValue(trimmed);
-	if (!root.isObject() && !root.isArray()) {
-		correctlyParsed = false;
+	JsonValue value = parseValue(trimmed);
+	if (!value.isObject() && !value.isArray()) { correctlyParsed = false; return; }
+	else{correctlyParsed = true;}
+
+	// If root is an object, copy its contents to this object
+	if (value.isObject()) {
+		auto obj = value.getObject();
+		if (obj) {
+			for (const auto& field : obj->getFields()) {
+				JsonObject::push_back(obj->operator[](field), field);
+			}
+		}
 	}
+	// If root is an array, create an object with a single array field
+	else if (value.isArray()) {	JsonObject::push_back(value, "root"); }
 }
 
 JsonValue JsonParser::parseValue(const std::string& value) {
-	
+
 	std::string trimmed = value;
 	trimmed.erase(0, trimmed.find_first_not_of(" \t\n\r\f\v"));
 	trimmed.erase(trimmed.find_last_not_of(" \t\n\r\f\v") + 1);
@@ -117,6 +126,7 @@ JsonValue JsonParser::parseValue(const std::string& value) {
 }
 
 std::vector<JsonValue> JsonParser::parseArray(const std::string& value) {
+
 	std::vector<JsonValue> arr;
 	std::string inner = value.substr(1, value.length() - 2);
 	
@@ -157,37 +167,42 @@ std::vector<JsonValue> JsonParser::parseArray(const std::string& value) {
 }
 
 std::vector<std::pair<std::string, std::string>> JsonParser::splitJsonObject(const std::string& jsonStr) {
+	
 	std::vector<std::pair<std::string, std::string>> pairs;
 	size_t pos = 0;
 
+	// Skip opening brace
+	while (pos < jsonStr.length() && jsonStr[pos] != '{') { ++pos; }
+	if (pos < jsonStr.length()) ++pos; // Skip the opening brace
+
 	while (pos < jsonStr.length()) {
 		// Skip whitespace
-		while (pos < jsonStr.length() && std::isspace(jsonStr[pos])) ++pos;
-		if (pos >= jsonStr.length()) break;
-
+		while (pos < jsonStr.length() && std::isspace(jsonStr[pos])) { ++pos; }
+		if (pos >= jsonStr.length()) { break; }
+		
+		// Check for closing brace
+		if (jsonStr[pos] == '}') { break; }
+		
 		// Extract key
 		std::string key = extractJsonKey(jsonStr, pos);
-		if (key.empty()) break;
-
+		if (key.empty()) { break; }
+		
 		// Skip whitespace and colon
-		while (pos < jsonStr.length() && (std::isspace(jsonStr[pos]) || jsonStr[pos] == ':')) ++pos;
-		if (pos >= jsonStr.length()) break;
-
+		while (pos < jsonStr.length() && (std::isspace(jsonStr[pos]) || jsonStr[pos] == ':')) { ++pos; }
+		if (pos >= jsonStr.length()) { break; } 
+		
 		// Extract value
 		std::string value = extractJsonValue(jsonStr, pos);
-		if (!value.empty()) {
-			pairs.emplace_back(key, value);
-		}
-
+		if (!value.empty()) { pairs.emplace_back(key, value); }
+		
 		// Skip comma and whitespace
-		while (pos < jsonStr.length() && (std::isspace(jsonStr[pos]) || jsonStr[pos] == ',')) ++pos;
+		while (pos < jsonStr.length() && (std::isspace(jsonStr[pos]) || jsonStr[pos] == ',')) { ++pos; }
 	}
-
 	return pairs;
 }
 
 std::string JsonParser::extractJsonKey(const std::string& jsonStr, size_t& pos) {
-	if (pos >= jsonStr.length() || jsonStr[pos] != '"') return "";
+	if (pos >= jsonStr.length() || jsonStr[pos] != '"') { return ""; }
 	
 	++pos; // Skip opening quote
 	size_t start = pos;
@@ -303,8 +318,11 @@ bool JsonParser::isNull(const std::string &key) const{
 }
 
 std::optional<JsonValue> JsonParser::getValue(const std::string& key) const {
-	if (!root.isObject()) return std::nullopt;
-	return root.getBlock()->operator[](key);
+	auto it = data.find(key);
+	if (it != data.end()) {
+		return *it->second;
+	}
+	return std::nullopt;
 }
 
 std::optional<bool> JsonParser::getBool(const std::string& key) const {
@@ -345,11 +363,7 @@ std::shared_ptr<JsonObject> JsonParser::getObject(const std::string& key) const 
 }
 
 std::vector<std::string> JsonParser::getFields(const std::string& key) const {
-	if (key.empty()) {
-		if (!root.isObject()) return {};
-		auto block = root.getBlock();
-		return block ? block->getFields() : std::vector<std::string>();
-	}
+	if (key.empty()) { return JsonObject::getFields(); }
 
 	auto value = getValue(key);
 	if (!value || !value->isObject()) return {};
