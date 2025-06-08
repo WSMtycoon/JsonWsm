@@ -9,14 +9,14 @@ param( [string]$testPath = "" )
 function Run-Test {
     param($testFile)
     # Run the test executable with the test file
-    ./bin/test_parser.exe $testFile
+    ./bin/parser.exe $testFile
 }
 
 # Main execution
 if ($testPath -eq "") {
     # Case 1: No parameters - run all tests in Test folder
     Write-Host "Running all tests in Test folder...`n"
-    $testFiles = Get-ChildItem -Path "Test/Json" -Filter "test_*.txt"
+    $testFiles = Get-ChildItem -Path "Test/Json" -Filter "test_*.json"
     foreach ($file in $testFiles) {
         Run-Test $file.FullName
     }
@@ -32,14 +32,14 @@ elseif ($testPath -match "^(\./|\.\./|[A-Za-z]:\\)") {
 }
 else {
     # Case 3: Test name or number specified
-    $testFile = "Test/Json/test_$testPath.txt"
+    $testFile = "Test/Json/test_$testPath.json"
     if (Test-Path $testFile) {
         Run-Test $testFile
     }
     else {
         Write-Host "Error: Test file not found: $testFile"
         Write-Host "Available test files in Test folder:"
-        Get-ChildItem -Path "Test/Json" -Filter "test_*.txt" | ForEach-Object {
+        Get-ChildItem -Path "Test/Json" -Filter "test_*.json" | ForEach-Object {
             Write-Host "  $($_.Name)"
         }
     }

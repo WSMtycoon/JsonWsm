@@ -49,7 +49,7 @@ STRUCT_EXE = $(BIN_DIR)/struct.exe
 $(shell mkdir -p $(BIN_DIR) $(LIB_DIR) $(OBJ_DIR))
 
 # Default target
-all: parser utils test
+all: parser utils tests libs
 
 # Build parser object files
 parser: $(PARSER_OBJS)
@@ -57,7 +57,10 @@ parser: $(PARSER_OBJS)
 # Build utils object files
 utils: $(UTILS_OBJS)
 
-# Build tests
+# Build tests struct
+struct: $(STRUCT_EXE)
+
+# Build tests parser
 tests: $(PARSER_EXE) $(STRUCT_EXE)
 
 # Build library
