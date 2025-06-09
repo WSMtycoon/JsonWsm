@@ -47,7 +47,7 @@ namespace WSM {
 		return fields;
 	}
 
-	std::string JsonArray::getValueString() const{
+	std::string JsonArray::getJsonString() const{
 		std::stringstream ss;
 		ss << "[";
 		for (size_t i = 0; i < data.size(); ++i) {

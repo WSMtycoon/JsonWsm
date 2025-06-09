@@ -49,7 +49,7 @@ namespace WSM {
 		return fields;
 	}
 
-	std::string JsonObject::getValueString() const {
+	std::string JsonObject::getJsonString() const {
 		std::stringstream ss;
 		ss << "{";
 		bool first = true;

@@ -109,10 +109,12 @@ namespace WSM {
 		return nullptr;
 	}
 
-	std::string JsonValue::getValueString() const {
+
+	std::string JsonValue::getJsonString() const{
 		switch (type) {
 			case JsonType::BOOL: return std::get<bool>(data) ? "true" : "false";
 			case JsonType::INT: return std::to_string(std::get<int>(data));
+			case JsonType::LONG: return std::to_string(std::get<long>(data));
 			case JsonType::FLOAT: return std::to_string(std::get<float>(data));
 			case JsonType::DOUBLE: {  
 				std::stringstream ss; 
@@ -120,14 +122,8 @@ namespace WSM {
 				return ss.str();
 			}
 			case JsonType::STRING: return "\"" + std::get<std::string>(data) + "\"";
-			case JsonType::ARRAY: {
-
-				return "";
-			} 
-			case JsonType::OBJECT: {
-
-				return ""; 
-			}
+			case JsonType::ARRAY: { return block->getJsonString(); } 
+			case JsonType::OBJECT: { return block->getJsonString(); }
 			case JsonType::NULL_TYPE: return "null";
 			default: return "";
 		}

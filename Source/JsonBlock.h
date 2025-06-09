@@ -52,7 +52,7 @@ namespace WSM {
 			virtual std::vector<std::string> getFields() const = 0;
 			
 			// Return Json 
-			virtual std::string getValueString() const = 0;
+			virtual std::string getJsonString() const = 0;
 			
 			//Constructor
 			JsonBlock(){};

@@ -50,7 +50,7 @@ namespace WSM {
 			std::vector<std::string> getFields() const override;
 
 			// Return Json
-			std::string getValueString() const override;
+			std::string getJsonString() const override;
 			
 			// Constructors
 			JsonArray() = default;
