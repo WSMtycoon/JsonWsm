@@ -74,7 +74,7 @@ namespace WSM {
 			std::shared_ptr<JsonArray> getArray() const;
 			std::shared_ptr<JsonObject> getObject() const;
 
-
+			std::string getValueString() const;
 			std::string getJsonString() const;
 			std::vector<std::string> getFields() const;
 			
