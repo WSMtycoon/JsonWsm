@@ -78,7 +78,7 @@ JsonValue JsonParser::parseValue(const std::string& value) {
 
 	// Handle array
 	if (trimmed[0] == '[' && trimmed[trimmed.length() - 1] == ']') {
-		return JsonValue(JsonArray(parseArray(trimmed)));
+		return JsonValue(parseArray(trimmed));
 	}
 	// Handle object
 	if (trimmed[0] == '{' && trimmed[trimmed.length() - 1] == '}') {

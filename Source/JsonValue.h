@@ -60,7 +60,10 @@ namespace WSM {
 			inline bool isEmpty() const {return type == JsonType::EMPTY;};
 			inline bool isNull() const {return type == JsonType::NULL_TYPE;};
 
-			bool isBlock() const{return (isObject() || isArray) ? true : false; };
+			bool isBlock() const{return (isObject() || isArray()) ? true : false; };
+
+			bool hasField(std::string field) const {return (block.get()->hasField(field));};
+			bool hasField(size_t index) const {return (block.get()->hasField(index));};
 
 			// Getters
 			JsonType getType() const {return type;};
