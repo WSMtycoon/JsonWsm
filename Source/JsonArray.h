@@ -46,7 +46,7 @@ namespace WSM {
 
 			// Key operations
 			bool hasField(const std::string& field) const override { return hasField(std::stoul(field)); };
-			bool hasField(const size_t index) const override {return (index > -1  && index < data.size ()) ? true : false;};
+			bool hasField(const size_t index) const override { return (index >= 0  && index < data.size()) ? true : false; };
 			std::vector<std::string> getFields() const override;
 
 			// Return Json

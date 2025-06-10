@@ -43,11 +43,9 @@ void JsonParser::parseJson(const std::string& jsonStr) {
 	// If root is an object, copy its contents to this object
 	if (value.isObject()) {
 		auto obj = value.getObject();
-		if (obj) {
-			for (const auto& field : obj->getFields()) {
-				JsonObject::push_back(obj->operator[](field), field);
-			}
-		}
+		if (obj) { 
+			for (const auto& field : obj->getFields()) { JsonObject::push_back(obj->operator[](field), field); } 
+		 }
 	}
 	// If root is an array, create an object with a single array field
 	else if (value.isArray()) {	JsonObject::push_back(value, "root"); }
