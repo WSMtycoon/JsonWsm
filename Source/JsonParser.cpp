@@ -101,19 +101,29 @@ JsonValue JsonParser::parseValue(const std::string& value) {
 				return JsonValue(static_cast<int>(val));
 			}
 		}
-
-		// Try parsing as float
-		if (std::regex_match(trimmed, std::regex(R"(-?\d+\.\d+)")) || 
-			std::regex_match(trimmed, std::regex(R"(-?\d+[eE][+-]?\d+)")) ||
-			std::regex_match(trimmed, std::regex(R"(-?\d+\.\d+[eE][+-]?\d+)"))) {
-			
-			// Check if it's a float (has 'f' suffix)
-			if (trimmed.back() == 'f' || trimmed.back() == 'F') {
-				return JsonValue(std::stof(trimmed.substr(0, trimmed.length() - 1)));
-			}
-			// Otherwise treat as double
-			return JsonValue(std::stod(trimmed));
+		// Check for float (with f/F suffix)
+		std::regex floatPattern(R"(-?\d+\.\d+)");
+		std::regex floatScientific1(R"(-?\d+[eE][+-]?\d+)");
+		std::regex floatScientific2(R"(-?\d+\.\d+[eE][+-]?\d+)");
+		if (trimmed.back() == 'f' || trimmed.back() == 'F') {
+			//std::string numStr = trimmed;
+			std::string numStr = trimmed.substr(0, trimmed.length() - 1);
+			// Check for scientific notation
+			if (std::regex_match(numStr, floatScientific1)) { return std::stof(numStr); }
+			if (std::regex_match(numStr, floatScientific2)) { return std::stof(numStr); }
+			if (std::regex_match(numStr, floatPattern)) { return std::stof(numStr); }
 		}
+
+
+		// Try parsing as Double
+		std::regex doublePattern(R"(-?\d+\.\d+)");
+		std::regex doubleScientific1(R"(-?\d+[eE][+-]?\d+)");
+		std::regex doubleScientific2(R"(-?\d+\.\d+[eE][+-]?\d+)");
+
+		if (std::regex_match(trimmed, doubleScientific1)){ return std::stod(trimmed); }
+		if (std::regex_match(trimmed, doubleScientific2)) { return std::stod(trimmed); }
+		if (std::regex_match(trimmed, doublePattern)) { return std::stod(trimmed); }
+
 	} catch (const std::exception&) {
 		// If number parsing fails, treat as string
 		return JsonValue(trimmed);

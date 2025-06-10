@@ -79,7 +79,6 @@ namespace WSM {
 		}
 		return std::nullopt;
 	}
-
 	std::optional<double> JsonValue::getDouble() const{
 		if(isDouble()){
 			if ( auto val = std::get_if<double>(&data) ) { return std::optional<double>(*val); }
@@ -112,10 +111,15 @@ namespace WSM {
 	std::string JsonValue::getValueString() const {
 		if(isBool()){ return std::get<bool>(data) ? "true" : "false";}
 		if(isInt()){ return std::to_string(std::get<int>(data));}
-		if(isFloat()){ return std::to_string(std::get<float>(data));}
+		if(isLong()){ return std::to_string(std::get<long>(data));}
+		if(isFloat()){ 
+			std::stringstream ss;
+			ss << std::setprecision(7) << std::get<float>(data) << "f";
+			return ss.str();
+		}
 		if(isDouble()){
 			std::stringstream ss; 
-			ss << std::fixed << std::setprecision(12) << std::get<double>(data);
+			ss << std::setprecision(15) << std::get<double>(data);
 			return ss.str();
 		}
 		if(isString()) {return std::get<std::string>(data); }
@@ -129,10 +133,14 @@ namespace WSM {
 			case JsonType::BOOL: return std::get<bool>(data) ? "true" : "false";
 			case JsonType::INT: return std::to_string(std::get<int>(data));
 			case JsonType::LONG: return std::to_string(std::get<long>(data));
-			case JsonType::FLOAT: return std::to_string(std::get<float>(data));
+			case JsonType::FLOAT: {
+				std::stringstream ss;
+				ss << std::setprecision(7) << std::get<float>(data) << "f";
+				return ss.str();
+			}
 			case JsonType::DOUBLE: {  
 				std::stringstream ss; 
-				ss << std::fixed << std::setprecision(12) << std::get<double>(data);
+				ss << std::setprecision(15) << std::get<double>(data);
 				return ss.str();
 			}
 			case JsonType::STRING: return "\"" + std::get<std::string>(data) + "\"";
