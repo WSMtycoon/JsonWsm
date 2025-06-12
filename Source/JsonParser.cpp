@@ -54,46 +54,52 @@ void JsonParser::parseJson(const std::string& jsonStr) {
 JsonValue JsonParser::parseValue(const std::string& value) {
 
 	std::string trimmed = value;
-	trimmed.erase(0, trimmed.find_first_not_of(" \t\n\r\f\v"));
-	trimmed.erase(trimmed.find_last_not_of(" \t\n\r\f\v") + 1);
-
-	// Check for string (with or without quotes)
-	if (trimmed[0] == '"' && trimmed[trimmed.length() - 1] == '"') {
-		trimmed = trimmed.substr(1, trimmed.length() - 2);
-	}
-
-	if (trimmed.empty()) { return JsonValue(JsonType::EMPTY); } // Empty value
-
-	// Check for boolean (case insensitive)
-	std::string lowerTrimmed = trimmed;
-	std::transform(lowerTrimmed.begin(), lowerTrimmed.end(), lowerTrimmed.begin(), ::tolower);
-	// Handle Null
-	if (lowerTrimmed == "null" || lowerTrimmed == "nullptr") { return JsonValue(JsonType::NULL_TYPE);  } // Null value
-	// Handle boolean
-	if (lowerTrimmed == "true" || lowerTrimmed == "false") return JsonValue(lowerTrimmed == "true");
-	// Handle string
-	if (trimmed[0] == '"' && trimmed[trimmed.length() - 1] == '"') {
-		return JsonValue(trimmed.substr(1, trimmed.length() - 2));
-	}
-
-	// Handle array
-	if (trimmed[0] == '[' && trimmed[trimmed.length() - 1] == ']') {
-		return JsonValue(parseArray(trimmed));
-	}
-	// Handle object
-	if (trimmed[0] == '{' && trimmed[trimmed.length() - 1] == '}') {
-		JsonObject obj;
-		auto pairs = splitJsonObject(trimmed);
-		for (const auto& pair : pairs) {
-			if (!pair.first.empty() && !pair.second.empty()) {
-				obj.push_back(parseValue(pair.second), pair.first);
-			}
-		}
-		return JsonValue(obj);
-	}
-
-	// Handle numbers
+	
 	try {
+	
+		trimmed.erase(0, trimmed.find_first_not_of(" \t\n\r\f\v"));
+		trimmed.erase(trimmed.find_last_not_of(" \t\n\r\f\v") + 1);
+
+		// Check for empty value first
+		if (trimmed.empty()) { return JsonValue(JsonType::EMPTY); }
+		
+		// Check for string (with or without quotes)
+		if (trimmed[0] == '"' && trimmed[trimmed.length() - 1] == '"') {
+			trimmed = trimmed.substr(1, trimmed.length() - 2);
+			if (trimmed.empty()) { return JsonValue(""); }
+		}
+
+		// Check for boolean (case insensitive)
+		std::string lowerTrimmed = trimmed;
+		std::transform(lowerTrimmed.begin(), lowerTrimmed.end(), lowerTrimmed.begin(), ::tolower);
+		// Handle Null
+		if (lowerTrimmed == "null" || lowerTrimmed == "nullptr") { return JsonValue(JsonType::NULL_TYPE);  } // Null value
+		// Handle boolean
+		if (lowerTrimmed == "true" || lowerTrimmed == "false") return JsonValue(lowerTrimmed == "true");
+		// Handle string
+		if (trimmed[0] == '"' && trimmed[trimmed.length() - 1] == '"') {
+			return JsonValue(trimmed.substr(1, trimmed.length() - 2));
+		}
+
+		// Handle array
+		if (trimmed[0] == '[' && trimmed[trimmed.length() - 1] == ']') {
+			return JsonValue(parseArray(trimmed));
+		}
+		// Handle object
+		if (trimmed[0] == '{' && trimmed[trimmed.length() - 1] == '}') {
+			JsonObject obj;
+			auto pairs = splitJsonObject(trimmed);
+			for (const auto& pair : pairs) {
+				if (!pair.first.empty()) {
+					// Distinguish between explicit empty string and missing value
+					if (pair.second == "\"\"") { obj.push_back(JsonValue(std::string("")), pair.first); } 
+					else { obj.push_back(parseValue(pair.second), pair.first); }
+				}
+			}
+			return JsonValue(obj);
+		}
+
+		// Handle numbers
 		// Try parsing as integer first
 		if (std::regex_match(trimmed, std::regex(R"(-?\d+)"))) {
 			long long val = std::stoll(trimmed);
@@ -201,7 +207,8 @@ std::vector<std::pair<std::string, std::string>> JsonParser::splitJsonObject(con
 		
 		// Extract value
 		std::string value = extractJsonValue(jsonStr, pos);
-		if (!value.empty()) { pairs.emplace_back(key, value); }
+		// Always add the pair, even if value is empty
+		pairs.emplace_back(key, value);
 		
 		// Skip comma and whitespace
 		while (pos < jsonStr.length() && (std::isspace(jsonStr[pos]) || jsonStr[pos] == ',')) { ++pos; }
@@ -226,8 +233,25 @@ std::string JsonParser::extractJsonKey(const std::string& jsonStr, size_t& pos) 
 }
 
 std::string JsonParser::extractJsonValue(const std::string& jsonStr, size_t& pos) {
+	// Skip whitespace
 	while (pos < jsonStr.length() && std::isspace(jsonStr[pos])) ++pos;
 	if (pos >= jsonStr.length()) return "";
+
+	// Check for empty value (comma or closing brace follows)
+	if (pos < jsonStr.length() && (jsonStr[pos] == ',' || jsonStr[pos] == '}')) {
+		// Return empty string for empty values
+		return "";
+	}
+
+	// Check for empty string
+	if (pos < jsonStr.length() && jsonStr[pos] == '"') {
+		++pos; // Skip opening quote
+		if (pos < jsonStr.length() && jsonStr[pos] == '"') {
+			++pos; // Skip closing quote
+			return "\"\""; // Return empty string
+		}
+		--pos; // Go back to opening quote
+	}
 
 	size_t start = pos;
 	bool inString = false;
@@ -235,7 +259,7 @@ std::string JsonParser::extractJsonValue(const std::string& jsonStr, size_t& pos
 	int nestLevel = 0;
 
 	// Handle string values
-	if (jsonStr[pos] == '"') {
+	if (pos < jsonStr.length() && jsonStr[pos] == '"') {
 		inString = true;
 		++pos;
 		while (pos < jsonStr.length()) {
@@ -248,7 +272,7 @@ std::string JsonParser::extractJsonValue(const std::string& jsonStr, size_t& pos
 	}
 
 	// Handle objects and arrays
-	if (jsonStr[pos] == '{' || jsonStr[pos] == '[') {
+	if (pos < jsonStr.length() && (jsonStr[pos] == '{' || jsonStr[pos] == '[')) {
 		char openChar = jsonStr[pos];
 		char closeChar = (openChar == '{') ? '}' : ']';
 		++pos;
