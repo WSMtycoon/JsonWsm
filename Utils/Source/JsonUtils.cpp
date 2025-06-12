@@ -16,16 +16,17 @@ namespace WSM {
 
 std::string JsonUtils::getJsonTypeString(const JsonType& value) {
 	switch (value) {
-		case JsonType::BOOL: return "bool";
-		case JsonType::INT: return "int";
-		case JsonType::FLOAT: return "float";
-		case JsonType::DOUBLE: return "double";
-		case JsonType::STRING: return "string";
-		case JsonType::ARRAY: return "array";
-		case JsonType::OBJECT: return "object";
-		case JsonType::EMPTY: return "empty";
-		case JsonType::NULL_TYPE: return "null";
-		default: return "unknown";
+		case JsonType::BOOL: return "Bool";
+		case JsonType::INT: return "Int";
+		case JsonType::LONG: return "Long";
+		case JsonType::FLOAT: return "Float";
+		case JsonType::DOUBLE: return "Double";
+		case JsonType::STRING: return "String";
+		case JsonType::ARRAY: return "Array";
+		case JsonType::OBJECT: return "Object";
+		case JsonType::EMPTY: return "Empty";
+		case JsonType::NULL_TYPE: return "Null";
+		default: return "Unknown";
 	}
 }
 
