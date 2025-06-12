@@ -100,44 +100,30 @@ namespace WSM {
 	std::string JsonValue::getValueString() const {
 		if(isBool()){ return std::get<bool>(data) ? "true" : "false";}
 		if(isInt()){ return std::to_string(std::get<int>(data));}
-		if(isLong()){ return std::to_string(std::get<long>(data));}
+		if(isLong()){ return std::to_string(std::get<int64_t>(data)) + "l";}
 		if(isFloat()){ 
 			std::stringstream ss;
-			ss << std::setprecision(7) << std::get<float>(data) << "f";
+			ss << std::setprecision(7) << std::get<float>(data) << "f" << std::flush;
 			return ss.str();
 		}
-		if(isDouble()){
+		if(isDouble()){ 
 			std::stringstream ss; 
-			ss << std::setprecision(15) << std::get<double>(data);
+			ss << std::setprecision(15) << std::get<double>(data) << std::flush;
 			return ss.str();
 		}
 		if(isString()) {return std::get<std::string>(data); }
 		if(isObject()) {return "Type Object";}
 		if(isArray()) {return "Type Array";}
+		if(isNull()){ return std::string("null");}
+		if(isEmpty()){ return std::string("");}
 		return "";
 	}
 
 	std::string JsonValue::getJsonString() const{
-		switch (type) {
-			case JsonType::BOOL: return std::get<bool>(data) ? "true" : "false";
-			case JsonType::INT: return std::to_string(std::get<int>(data));
-			case JsonType::LONG: return std::to_string(std::get<long>(data));
-			case JsonType::FLOAT: {
-				std::stringstream ss;
-				ss << std::setprecision(7) << std::get<float>(data) << "f";
-				return ss.str();
-			}
-			case JsonType::DOUBLE: {  
-				std::stringstream ss; 
-				ss << std::setprecision(15) << std::get<double>(data);
-				return ss.str();
-			}
-			case JsonType::STRING: return "\"" + std::get<std::string>(data) + "\"";
-			case JsonType::ARRAY: { return block->getJsonString(); } 
-			case JsonType::OBJECT: { return block->getJsonString(); }
-			case JsonType::NULL_TYPE: return "null";
-			default: return "";
-		}
+		if(isString()){ return "\"" + std::get<std::string>(data) + "\""; } 
+		if(isArray()) { return block->getJsonString(); } 
+		if(isObject()) { return block->getJsonString(); }
+		return getValueString();
 	}
 
 	void JsonValue::set(const JsonArray &array)	{ type = JsonType::ARRAY; block = std::make_shared<JsonArray>(array); }
