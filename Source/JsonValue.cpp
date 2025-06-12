@@ -61,34 +61,27 @@ namespace WSM {
 	}
 
 	std::optional<bool> JsonValue::getBool() const {
-		if(isBool()){
-			if ( auto val = std::get_if<bool>(&data) ) { return std::optional<bool>(*val); }
-		}
+		if(isBool()){ if ( auto val = std::get_if<bool>(&data) ) { return std::optional<bool>(*val); } }
 	    return std::nullopt;
 	}
 	std::optional<int> JsonValue::getInt() const{
-		if(isInt()){
-			if ( auto val = std::get_if<int>(&data) ) { return std::optional<int>(*val); }
-		}
+		if(isInt()){ if ( auto val = std::get_if<int>(&data) ) { return std::optional<int>(*val); } }
 		return std::nullopt;
 	}
-
+	std::optional<int64_t> JsonValue::getLong() const{
+		if(isLong()){ if ( auto val = std::get_if<int64_t>(&data) ) { return std::optional<int64_t>(*val); } }
+		return std::nullopt;
+	}
 	std::optional<float> JsonValue::getFloat() const{
-		if(isFloat()){
-			if ( auto val = std::get_if<float>(&data) ) { return std::optional<float>(*val); }
-		}
+		if(isFloat()){ if ( auto val = std::get_if<float>(&data) ) { return std::optional<float>(*val); } }
 		return std::nullopt;
 	}
 	std::optional<double> JsonValue::getDouble() const{
-		if(isDouble()){
-			if ( auto val = std::get_if<double>(&data) ) { return std::optional<double>(*val); }
-		}
+		if(isDouble()){ if ( auto val = std::get_if<double>(&data) ) { return std::optional<double>(*val); } }
 		return std::nullopt;
 	}
 	std::optional<std::string> JsonValue::getString() const{
-		if(isString()){
-			if ( auto val = std::get_if<std::string>(&data) ) { return std::optional<std::string>(*val); }
-		}
+		if(isString()){ if ( auto val = std::get_if<std::string>(&data) ) { return std::optional<std::string>(*val); } }
 		return std::nullopt;
 	}
 	std::vector<std::string> JsonValue::getFields() const {
@@ -96,15 +89,11 @@ namespace WSM {
 		return std::vector<std::string>();
 	}
 	std::shared_ptr<JsonArray> JsonValue::getArray() const {
-		if (isArray()) {
-			return std::dynamic_pointer_cast<JsonArray>(block);
-		}
+		if (isArray()) { return std::dynamic_pointer_cast<JsonArray>(block); }
 		return nullptr;
 	}
 	std::shared_ptr<JsonObject> JsonValue::getObject() const {
-		if (isObject()) {
-			return std::dynamic_pointer_cast<JsonObject>(block);
-		}
+		if (isObject()) { return std::dynamic_pointer_cast<JsonObject>(block); }
 		return nullptr;
 	}
 

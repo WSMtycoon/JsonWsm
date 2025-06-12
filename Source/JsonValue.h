@@ -27,7 +27,7 @@ namespace WSM {
 	class JsonArray;
 	class JsonObject;
 
-	using VariantType = std::variant<bool, int, float, double, std::string>;
+	using VariantType = std::variant<bool, int, int64_t, float, double, std::string>;
 
 	struct JsonData {
 		VariantType primitive;
@@ -48,11 +48,13 @@ namespace WSM {
 			// IsTypes
 			inline bool isBool() const {return type == JsonType::BOOL;};
 			inline bool isInt() const {return type == JsonType::INT;};
+			inline bool isLong() const {return type == JsonType::LONG;};
+			inline bool isNumeric() const {return isInt() || isLong();};
 			inline bool isFloat() const {return type == JsonType::FLOAT;};
 			inline bool isDouble() const {return type == JsonType::DOUBLE;};
 			inline bool isDecimal() const {return isFloat() || isDouble();};
 			inline bool isString() const {return type == JsonType::STRING;}; 
-			inline bool isVariant() const{return isBool() || isInt() || isDecimal() || isString();};
+			inline bool isVariant() const{return isBool() || isNumeric() || isDecimal() || isString();};
 
 			inline bool isArray() const {return (type == JsonType::ARRAY && block != nullptr) ? true : false;};
 			inline bool isObject() const {return (type == JsonType::OBJECT && block != nullptr) ? true : false;};
@@ -70,6 +72,7 @@ namespace WSM {
 
 			std::optional<bool> getBool() const;
 			std::optional<int> getInt() const;
+			std::optional<int64_t> getLong() const;
 			std::optional<float> getFloat() const;
 			std::optional<double> getDouble() const;
 			std::optional<std::string> getString() const;
@@ -82,21 +85,28 @@ namespace WSM {
 			std::vector<std::string> getFields() const;
 			
 			// Setters
-			void set() { type = JsonType::EMPTY; }
+			void set(JsonType set) { type = set; }
 			void set(bool value) { type = JsonType::BOOL; data = value; }
 			void set(int value) { type = JsonType::INT; data = value; }
+			void set(int64_t value) { type = JsonType::LONG; data = value; }
 			void set(float value) { type = JsonType::FLOAT; data = value; }
 			void set(double value) { type = JsonType::DOUBLE; data = value; }
 			void set(const std::string& value) { type = JsonType::STRING; data = value; }
 			void set(const JsonArray& array);
 			void set(const JsonObject& object);
-			void setNull() { type = JsonType::NULL_TYPE; }
+
 
 			// Constructors
-			JsonValue() : type(JsonType::NULL_TYPE) {}
-			JsonValue(JsonType set) : type(set) {}
+			JsonValue(JsonType set) : type(set) {
+				switch(type){
+					case(JsonType::STRING): data = std::string(""); break; 
+					case(JsonType::NULL_TYPE): break; 
+					default: type = JsonType::EMPTY;
+				}
+			}
 			JsonValue(bool value) : type(JsonType::BOOL) { data = value; }
 			JsonValue(int value) : type(JsonType::INT) { data = value; }
+			JsonValue(int64_t value) : type(JsonType::LONG) { data = value; }
 			JsonValue(float value) : type(JsonType::FLOAT) { data = value; }
 			JsonValue(double value) : type(JsonType::DOUBLE) { data = value; }
 			JsonValue(const std::string& value) : type(JsonType::STRING) { data = value; }

@@ -103,16 +103,25 @@ JsonValue JsonParser::parseValue(const std::string& value) {
 		// Try parsing as integer first
 		if (std::regex_match(trimmed, std::regex(R"(-?\d+)"))) {
 			long long val = std::stoll(trimmed);
-			if (val <= std::numeric_limits<int>::max() && val >= std::numeric_limits<int>::min()) {
-				return JsonValue(static_cast<int>(val));
+			if (val <= std::numeric_limits<int>::max() && val >= std::numeric_limits<int>::min()) 
+				{ return JsonValue(static_cast<int>(val)); }
+			if (val <= std::numeric_limits<int64_t>::max() && val >= std::numeric_limits<int64_t>::min()) 
+				{ return JsonValue(static_cast<int64_t>(val)); }
+		}
+		// Try parsing as long first
+		if (!trimmed.empty() && (trimmed.back() == 'l' || trimmed.back() == 'L')) {
+			std::string numStr = trimmed.substr(0, trimmed.length() - 1);
+			if (std::regex_match(numStr, std::regex(R"(-?\d+)"))) {
+				long long val = std::stoll(numStr);
+				if (val <= std::numeric_limits<int64_t>::max() && val >= std::numeric_limits<int64_t>::min()) 
+					{ return JsonValue(static_cast<int64_t>(val)); }
 			}
 		}
 		// Check for float (with f/F suffix)
 		std::regex floatPattern(R"(-?\d+\.\d+)");
 		std::regex floatScientific1(R"(-?\d+[eE][+-]?\d+)");
 		std::regex floatScientific2(R"(-?\d+\.\d+[eE][+-]?\d+)");
-		if (trimmed.back() == 'f' || trimmed.back() == 'F') {
-			//std::string numStr = trimmed;
+		if (!trimmed.empty() && (trimmed.back() == 'f' || trimmed.back() == 'F')) {
 			std::string numStr = trimmed.substr(0, trimmed.length() - 1);
 			// Check for scientific notation
 			if (std::regex_match(numStr, floatScientific1)) { return std::stof(numStr); }
