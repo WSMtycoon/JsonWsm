@@ -1,4 +1,4 @@
-# JsonWSM - Simple JSON Parser
+# JsonWSM - Simple JSON Parser Cpp
 
 A lightweight JSON parser that supports UTF-8 encoding and provides easy access to JSON data through a simple interface.
 
@@ -9,38 +9,64 @@ A lightweight JSON parser that supports UTF-8 encoding and provides easy access 
 - Automatic type detection for values
 - Nested object access using dot notation
 - Support for multiple data types:
+  - Null
+  - Empty
   - Boolean
   - Integer
+  - Long
   - Float
   - Double
   - String
   - Arrays
-  - Nested Objects
+  - Objects
+
+## Building
+#include "Source\JsonParser.h"
 
 ## Usage
 
+### Работа с вложенными структурами
 ```cpp
-#include "JsonWSM.h"
+JsonParser parser(R"({
+    "user": {
+        "profile": {
+            "name": "John",
+            "age": 30
+        },
+        "items": [
+            {"id": 1, "price": 19.99f},
+            {"id": 2, "price": 29.99f}
+        ]
+    }
+})");
 
-// Create a JSON object from a string
-JsonWSM json("{\"name\": \"John\", \"age\": 30}");
+if (parser.isCorrectlyParsed()) {
+    
+	std::string name = "";
+	int age = 0;
+	float price = 0.;
+	
+	if(parser.hasField("user")){
+		if(parser["user"].hasField("profile")){
+			if(parser["user"]["profile"].hasField("name"))
+				{name = parser["user"]["profile"]["name"].getString();}
+			if(parser["user"]["profile"].hasField("age"))
+				{age = parser["user"]["profile"]["age"].getInt();}
+			if(parser["user"]["profile"].hasField("price"))
+				{price = parser["user"]["items"][0]["price"].getFloat();;}
+		}
+	}
 
-// Access values
-std::any name = json["name"];
-std::any age = json["age"];
-
-## Building
-
-The project uses Make for building. To build and run the tests:
-
-# Build test the project
-".\\build.ps1"
+	if (parser["user"]["items"].isArray()) {
+		// Обработка массива
+	}
+}
+```
 
 ## Requirements
 
 - C++17 compatible compiler
 - Make
-- PowerShell (for build script)
 
 ## License
 
