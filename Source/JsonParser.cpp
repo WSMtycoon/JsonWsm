@@ -16,7 +16,7 @@
 	#include <limits>
 	#include <algorithm>
 	
-	#include "../Header/JsonParser.h"
+	#include "../Header/JsonWsm/JsonParser.h"
 
 namespace WSM {
 
