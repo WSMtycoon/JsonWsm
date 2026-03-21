@@ -21,7 +21,7 @@ A lightweight JSON parser that supports UTF-8 encoding and provides easy access 
   - Objects
 
 ## Building
-#include "Source\JsonParser.h"
+#include "Module\JsonParser.h"
 
 ## Usage
 

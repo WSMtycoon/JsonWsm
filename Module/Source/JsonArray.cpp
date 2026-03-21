@@ -13,7 +13,7 @@
 #include <sstream>
 #include <iomanip>
 
-#include "../Header/JsonWsm/JsonArray.h"
+#include "../JsonArray.h"
 
 namespace WSM {
 

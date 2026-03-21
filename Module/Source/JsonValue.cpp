@@ -10,9 +10,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License. **/
 
-#include "../Header/JsonWsm/JsonValue.h"
-#include "../Header/JsonWsm/JsonObject.h"
-#include "../Header/JsonWsm/JsonArray.h"
+#include "../JsonValue.h"
+#include "../JsonObject.h"
+#include "../JsonArray.h"
 
 namespace WSM {
 
